@@ -1,0 +1,3069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>|| Swami Shreeji || Attendance</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import{getDatabase,ref,set,onValue,get}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  // ── YOUR FIREBASE CONFIG ─────────────────────────────────────────────────
+  // REPLACE these values with your actual Firebase project config
+  const firebaseConfig={
+    apiKey: "AIzaSyAITKjigrJXvpJm8Lt0QEdf2DcHX00PjpM",
+    authDomain: "shreeji-attendance-c49b7.firebaseapp.com",
+    databaseURL: "https://shreeji-attendance-c49b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "shreeji-attendance-c49b7",
+    storageBucket: "shreeji-attendance-c49b7.firebasestorage.app",
+    messagingSenderId: "309539907524",
+    appId: "1:309539907524:web:9a53fb74b9358037746691"
+  };
+
+  const ADMIN_EMAIL="akashhumarmalekar@gmail.com";
+
+  const app=initializeApp(firebaseConfig);
+  const db=getDatabase(app);
+  const auth=getAuth(app);
+  const provider=new GoogleAuthProvider();
+
+  // Expose to global so Babel/React can use them
+  window.__fb={db,auth,provider,ref,set,onValue,get,signInWithPopup,signOut,onAuthStateChanged,ADMIN_EMAIL};
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;}
+body{margin:0;background:#f5f4f0;font-family:'Segoe UI',sans-serif;font-size:14px;}
+input,select,button,textarea{font-family:inherit;outline:none;}
+button:active{transform:scale(0.97);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:10px;font-size:14px;font-weight:500;z-index:2000;color:#fff;pointer-events:none;animation:fadein 0.2s;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+@keyframes fadein{from{opacity:0;bottom:10px}to{opacity:1;bottom:24px}}
+.tab-btn{padding:9px 18px;border:none;border-bottom:3px solid transparent;background:transparent;cursor:pointer;font-size:14px;font-weight:500;color:#888;transition:all .15s;}
+.tab-btn.active{color:#1a1a1a;border-bottom-color:#1a1a1a;}
+.tab-btn:hover:not(.active){color:#444;}
+.card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;}
+.badge{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600;}
+.badge-R{background:#dcfce7;color:#15803d;}
+.badge-I{background:#fef3c7;color:#92400e;}
+.badge-N{background:#fee2e2;color:#b91c1c;}
+.badge-P{background:#dcfce7;color:#15803d;}
+.badge-A{background:#fee2e2;color:#b91c1c;}
+.badge-u{background:#f3f4f6;color:#6b7280;}
+.row-hover:hover{background:#fafafa;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#1e1e1e;color:#fff;padding:9px 11px;text-align:left;font-weight:500;position:sticky;top:0;z-index:1;}
+td{padding:8px 11px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+tr:nth-child(even) td{background:#fafafa;}
+.input-s{padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:13px;color:#1a1a1a;background:#fff;width:100%;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;border:none;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.btn:hover{opacity:.88;}
+.btn-green{background:#15803d;color:#fff;}
+.btn-blue{background:#1e40af;color:#fff;}
+.btn-red{background:#dc2626;color:#fff;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-orange{background:#d97706;color:#fff;}
+.btn-gray{background:#e5e7eb;color:#374151;}
+.btn-purple{background:#7c3aed;color:#fff;}
+.btn-teal{background:#0d9488;color:#fff;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal{background:#fff;border-radius:14px;padding:28px;max-width:440px;width:92%;box-shadow:0 10px 50px rgba(0,0,0,.2);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:540px){.form-grid{grid-template-columns:1fr;}}
+.form-label{display:block;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.form-input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #ddd;font-size:13px;color:#1a1a1a;background:#fff;transition:border-color .15s;}
+.form-input:focus{border-color:#7c3aed;box-shadow:0 0 0 2px rgba(124,58,237,.12);}
+.fp-member-chip{display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:4px 10px;font-size:12px;font-weight:500;color:#166534;margin:3px;}
+.fp-group-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;margin-bottom:14px;overflow:hidden;}
+.fp-group-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#f9f9f7;border-bottom:1px solid #eee;cursor:pointer;}
+.db-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f2f2f2;}
+.db-row:last-child{border-bottom:none;}
+.stat-card{background:#f4f4f0;border-radius:10px;padding:12px 16px;text-align:center;}
+.stat-label{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat-num{font-size:24px;font-weight:700;}
+@media(max-width:600px){.btn{padding:7px 11px;font-size:12px;}.hide-sm{display:none!important;}}
+/* Dark mode overrides applied via inline styles on root div */
+.dark .card{background:#1e293b;border-color:#334155;}
+.dark .stat-card{background:#1e293b;}
+.dark .tab-btn{color:#94a3b8;}
+.dark .tab-btn.active{color:#f1f5f9;border-bottom-color:#f1f5f9;}
+.dark table th{background:#1e40af;}
+.dark td{border-color:#334155;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo}=React;
+
+// ─── Master Data ────────────────────────────────────────────────────────────
+const MASTER=[
+  {name:"Abhay Ramesh Kotadiya",followup:"Yash Kaila",contact:"8928478896"},
+  {name:"Abhishek Bhagwan Mukhiya",followup:"Aditya Shrotriya",contact:"9892003415"},
+  {name:"Adarsh Murli Tilwani",followup:"Dhaval Chhaya",contact:"7984551596"},
+  {name:"Aditya Piyush Shrotriya",followup:"Vinit Hindocha",contact:"8879823171"},
+  {name:"Ajay Pravin Savaliya",followup:"Dhaval Chhaya",contact:"8850300528"},
+  {name:"Akash Rajesh Kajale",followup:"Akash Humarmalekar",contact:"9594674513"},
+  {name:"Akash Shekhar Humarmalekar",followup:"Vinit Hindocha",contact:"8828345989"},
+  {name:"Akshar Virendra Thoria",followup:"Yash Kaila",contact:"9321655236"},
+  {name:"Akshay Kiran Varma",followup:"Dhaval Chhaya",contact:"8767952100"},
+  {name:"Anand Bhagwan Mukhiya",followup:"Aditya Shrotriya",contact:"9867382698"},
+  {name:"Ankit Shyam Chaturvedi",followup:"Yash Kaila",contact:"8976458774"},
+  {name:"Babu Gogan Shingala",followup:"Suvas Waghela",contact:"9833722626"},
+  {name:"Bhargav Babu Shingala",followup:"Yash Kaila",contact:"9324822270"},
+  {name:"Bhavesh Savjibhai Maru",followup:"Suvas Waghela",contact:"9820104285"},
+  {name:"Bhavesh Dhanji Makwana",followup:"Suvas Waghela",contact:"9326669364"},
+  {name:"Bhavesh Mansukhlal Rathod",followup:"Vinit Hindocha",contact:"9769113490"},
+  {name:"Bhavyam Jaysukh Bhalala",followup:"Vinit Hindocha",contact:"8928437150"},
+  {name:"Bhupat Chhana Pagdar",followup:"Pawan Rathod",contact:"8369621161"},
+  {name:"Brijesh Kirit Mehta",followup:"Vinit Hindocha",contact:"9987756645"},
+  {name:"Brijesh Rajesh Mavani",followup:"Aditya Shrotriya",contact:"8657671173"},
+  {name:"Chiman Hardas Lunagarya",followup:"Pawan Rathod",contact:"7021453983"},
+  {name:"Daksh Pragnesh Parmar",followup:"Yash Kaila",contact:"9082151086"},
+  {name:"Darshan Mahesh Valand",followup:"Bhavyam Bhalala",contact:"9967348562"},
+  {name:"Darshan Pankaj Patel",followup:"Brijesh Mehta",contact:"9653211771"},
+  {name:"Darshil Rajendra Shukla",followup:"Yash Kaila",contact:"7303094822"},
+  {name:"Dhaval Dhiru Chhaya",followup:"Vinit Hindocha",contact:"9321166733"},
+  {name:"Dhiraj Chandrabhan Gupta",followup:"Brijesh Mehta",contact:"9372227998"},
+  {name:"Dhiraj Damodar Suthar",followup:"Dhaval Chhaya",contact:"7506050012"},
+  {name:"Dhiraj Suresh Chekhaliya",followup:"Suresh Suthar",contact:"9137405663"},
+  {name:"Divyesh Haresh Meva",followup:"Vinit Hindocha",contact:"8446658986"},
+  {name:"Gaurav Satish Hingol",followup:"Yash Kaila",contact:"8424967939"},
+  {name:"Govinda Upendra Yadav",followup:"Aditya Shrotriya",contact:"7710807621"},
+  {name:"Harin Acharya",followup:"Dhaval Chhaya",contact:"9699714521"},
+  {name:"Harsh Ashok Mewada",followup:"Akash Humarmalekar",contact:"8097341686"},
+  {name:"Harsh Bharat Somaiya",followup:"Akash Humarmalekar",contact:"9326640162"},
+  {name:"Harsh Nitin Parmar",followup:"Yash Kaila",contact:"9372876704"},
+  {name:"Harsh Ramesh Barvaliya",followup:"Akash Humarmalekar",contact:"7977090024"},
+  {name:"Harshit Gautam Santoki",followup:"Brijesh Mehta",contact:"9323579679"},
+  {name:"Heramb Sharad Kadam",followup:"Akash Humarmalekar",contact:"9326357871"},
+  {name:"Het Kalpesh Raja",followup:"Akash Humarmalekar",contact:"9324856861"},
+  {name:"Hitesh Dhanji Bhalala",followup:"Pawan Rathod",contact:"9820006620"},
+  {name:"Jash Kiran Oza",followup:"Aditya Shrotriya",contact:"9867577371"},
+  {name:"Jasmin Ramesh Kotadiya",followup:"Divyesh Meva",contact:"8286914254"},
+  {name:"Jay Sailesh Kawa",followup:"Brijesh Mehta",contact:"8591880032"},
+  {name:"Jay Shailesh Virani",followup:"Brijesh Mehta",contact:"9313712493"},
+  {name:"Jayanti Hari Chauhan",followup:"Suvas Waghela",contact:"9920883714"},
+  {name:"Jayanti Parshottam Vaishnav",followup:"Suvas Waghela",contact:"9619720561"},
+  {name:"Jimesh Bhanu Chhunchha",followup:"Divyesh Meva",contact:"9326747197"},
+  {name:"Karan Tushar Shah",followup:"Aditya Shrotriya",contact:"9920789985"},
+  {name:"Kaushik Jaswant Darji",followup:"Suvas Waghela",contact:"9892784111"},
+  {name:"Kishan Vinod Suralia",followup:"Dhaval Chhaya",contact:"9892054568"},
+  {name:"Krishna Kamlesh Darji",followup:"Akash Humarmalekar",contact:"9326612603"},
+  {name:"Kush Pinakin Chauhan",followup:"Bhavyam Bhalala",contact:"7977554545"},
+  {name:"Lokesh Shrikant Rathod",followup:"Suresh Suthar",contact:"8356032401"},
+  {name:"Madhavesh Anant Lonkar",followup:"Akash Humarmalekar",contact:"8850249397"},
+  {name:"Mahesh Amrut Valand",followup:"Pawan Rathod",contact:"9323448143"},
+  {name:"Mahesh Jagan Kolhekar",followup:"Aditya Shrotriya",contact:"8097143595"},
+  {name:"Mahesh Ramesh Rakholiya",followup:"Dhaval Chhaya",contact:"9970420574"},
+  {name:"Mahesh Vaman Makwana",followup:"Suvas Waghela",contact:"9833405775"},
+  {name:"Manan Kiran Varma",followup:"Yash Kaila",contact:"7718935417"},
+  {name:"Manan Ramji Rangani",followup:"Aditya Shrotriya",contact:"9119568990"},
+  {name:"Manan Sumit More",followup:"Akash Humarmalekar",contact:"7777019141"},
+  {name:"Manish Hasmukh Rathod",followup:"Suvas Waghela",contact:"9920347766"},
+  {name:"Mansukh Vallabh Ragani",followup:"Pawan Rathod",contact:"9969671953"},
+  {name:"Mayank Narsi Virani",followup:"Yash Kaila",contact:"8169136876"},
+  {name:"Meet Bhikhu Paghadar",followup:"Yash Kaila",contact:"8657191740"},
+  {name:"Meet Nilesh Bataviya",followup:"Brijesh Mehta",contact:"8591110566"},
+  {name:"Mukesh Magan Vekariya",followup:"Pawan Rathod",contact:"9768607127"},
+  {name:"Naresh Bharat Chekhaliya",followup:"Suresh Suthar",contact:"8104433130"},
+  {name:"Naresh Bhimesh Yasolu",followup:"Brijesh Mehta",contact:"9920194401"},
+  {name:"Neev Umesh Bhalala",followup:"Akash Humarmalekar",contact:"9082020439"},
+  {name:"Nimesh Navinchandra Tailor",followup:"Suvas Waghela",contact:"8976229951"},
+  {name:"Niral Dinesh Darji",followup:"Suvas Waghela",contact:"9833743465"},
+  {name:"Nirmit Manish Gadiya",followup:"Yash Kaila",contact:"8169880064"},
+  {name:"Nishit Manish Gadiya",followup:"Yash Kaila",contact:"9321657762"},
+  {name:"Parth Kamlesh Luhar",followup:"Brijesh Mehta",contact:"7977455388"},
+  {name:"Pawan Hasmukh Rathod",followup:"Vinit Hindocha",contact:"9920347755"},
+  {name:"Piyush Kalu Gajera",followup:"Divyesh Meva",contact:"9372091348"},
+  {name:"Prakash Madhu Karkar",followup:"Pawan Rathod",contact:"9869729050"},
+  {name:"Pratham Hitesh Bhatt",followup:"Suresh Suthar",contact:"9320264456"},
+  {name:"Prem Harish Acharya",followup:"Aditya Shrotriya",contact:"8369772080"},
+  {name:"Priyang Amar Trivedi",followup:"Suresh Suthar",contact:"7016988667"},
+  {name:"Raj Jayesh Thaker",followup:"Dhaval Chhaya",contact:"9653412389"},
+  {name:"Raj Nilish Sarsavadiya",followup:"Dhaval Chhaya",contact:"8369025261"},
+  {name:"Rajesh Mohan Bariya",followup:"Dhaval Chhaya",contact:"8879682918"},
+  {name:"Raju Ashok Joshi",followup:"Vinit Hindocha",contact:"9819263673"},
+  {name:"Rakesh Ashok Katrimani",followup:"Aditya Shrotriya",contact:"8291082124"},
+  {name:"Ratilal Hirji Mistry",followup:"Pawan Rathod",contact:"9819909965"},
+  {name:"Ritesh Ramesh Jethva",followup:"Brijesh Mehta",contact:"8655748087"},
+  {name:"Ritesh Suresh Chekhaliya",followup:"Suresh Suthar",contact:"9558258827"},
+  {name:"Rohit Gajraj Rao",followup:"Brijesh Mehta",contact:"7977112882"},
+  {name:"Rohit Pravin Gadhiya",followup:"Pawan Rathod",contact:"9892718178"},
+  {name:"Rudra Manish Rathod",followup:"Bhavyam Bhalala",contact:"7025124800"},
+  {name:"Rudra Sanjay Bhanushali",followup:"Akash Humarmalekar",contact:"8369580979"},
+  {name:"Sagar Jagu Parmar",followup:"Bhavyam Bhalala",contact:"8268279680"},
+  {name:"Sameer Vallabhji Rathod",followup:"Pawan Rathod",contact:"9773712681"},
+  {name:"Samir Dhiraj Patel",followup:"Pawan Rathod",contact:"9867318909"},
+  {name:"Santosh Bharat Chekhaliya",followup:"Dhaval Chhaya",contact:"9321554091"},
+  {name:"Shaunak Sharad Kadam",followup:"Akash Humarmalekar",contact:"9867396579"},
+  {name:"Shubh Dilip Bhatt",followup:"Suresh Suthar",contact:"7021056705"},
+  {name:"Shubham Prasad Shetty",followup:"Brijesh Mehta",contact:"9833729129"},
+  {name:"Siddharth Anant Lonkar",followup:"Akash Humarmalekar",contact:"8169062573"},
+  {name:"Siddharth Karsan Radadiya",followup:"Divyesh Meva",contact:"9653309863"},
+  {name:"Soham Jimesh Chhunchha",followup:"Brijesh Mehta",contact:"8655318387"},
+  {name:"Sunjay Arjun Ladva",followup:"Suvas Waghela",contact:"9930372149"},
+  {name:"Suresh Damodar Suthar",followup:"Vinit Hindocha",contact:"9326206944"},
+  {name:"Suvas Pravin Waghela",followup:"Vinit Hindocha",contact:"9869123499"},
+  {name:"Tanish Umesh Bhalala",followup:"Suresh Suthar",contact:"9321372159"},
+  {name:"Tirth Kiran Parmar",followup:"Aditya Shrotriya",contact:"9082080571"},
+  {name:"Tushar Amrit Ratda",followup:"Bhavyam Bhalala",contact:"9326157626"},
+  {name:"Tushar Manoj Gupta",followup:"Akash Humarmalekar",contact:"8850781764"},
+  {name:"Tushar Suresh Solanki",followup:"Suresh Suthar",contact:"8591250611"},
+  {name:"Umesh Dhanji Bhalala",followup:"Pawan Rathod",contact:"9920049046"},
+  {name:"Upendra Jagbir Yadav",followup:"Pawan Rathod",contact:"8652155775"},
+  {name:"Vedant Devang Mehta",followup:"Yash Kaila",contact:"7738699819"},
+  {name:"Veeresh Gaurav Lingayat",followup:"Aditya Shrotriya",contact:"9819616877"},
+  {name:"Vinit Sanjay Hindocha",followup:"Vinit Hindocha",contact:"9820198422"},
+  {name:"Viral Mahesh Makwana",followup:"Aditya Shrotriya",contact:"9137049891"},
+  {name:"Viren Ajit Delkar",followup:"Akash Humarmalekar",contact:"7021897552"},
+  {name:"Vivek Manoj Gupta",followup:"Akash Humarmalekar",contact:"7977461849"},
+  {name:"Vivek Murli Tilwani",followup:"Dhaval Chhaya",contact:"9867297978"},
+  {name:"Yakshit Mahendra Patel",followup:"Yash Kaila",contact:"9323484048"},
+  {name:"Yash Hari Soni",followup:"Dhaval Chhaya",contact:"9653149347"},
+  {name:"Yash Jayanti Kaila",followup:"Vinit Hindocha",contact:"9867778997"},
+  {name:"Yash Mitesh Bhatda",followup:"Akash Humarmalekar",contact:"8591847916"},
+  {name:"Yogesh Rajesh Kajale",followup:"Akash Humarmalekar",contact:"8928280032"},
+  {name:"Yug Prasad Shetty",followup:"Brijesh Mehta",contact:"9136567791"},
+  {name:"Rahul Vitthal Savalia",followup:"Dhaval Chhaya",contact:""},
+  {name:"Avinash Vinayak Kadam",followup:"Akash Humarmalekar",contact:""},
+];
+
+// ─── Firebase DB helpers ─────────────────────────────────────────────────────
+// All data lives at /shreeji/ in Firebase Realtime Database.
+// We keep localStorage as a fast local cache so the UI is instant on load,
+// and push every write to Firebase immediately.
+const DB_PREFIX="shreeji";
+function fbRef(key){return window.__fb.ref(window.__fb.db,`${DB_PREFIX}/${key}`);}
+function fbSet(key,val){
+  if(!window.__fb) return;
+  window.__fb.set(fbRef(key),val).catch(e=>console.warn("FB write error",e));
+}
+
+// ─── Storage helpers (localStorage cache + Firebase sync) ───────────────────
+const LS_ATT="shreeji_attendance";
+const LS_HIST="shreeji_history";
+const LS_MEMBERS="shreeji_members";
+const LS_FP="shreeji_followup_overrides";
+const LS_PIN="shreeji_pin";
+const LS_SABHA="shreeji_sabha_type"; // current session sabha type
+const LS_NOTES="shreeji_session_notes"; // {date: note}
+const LS_CAT_OV="shreeji_cat_overrides"; // {name: "R"|"I"|"N"} manual overrides
+
+function loadAtt(){
+  try{const r=localStorage.getItem(LS_ATT);if(r)return JSON.parse(r);}catch(e){}
+  return Object.fromEntries(MASTER.map(m=>[m.name,{status:"A",time:""}]));
+}
+function saveAtt(a){try{localStorage.setItem(LS_ATT,JSON.stringify(a));}catch(e){}fbSet("attendance",a);}
+function loadHist(){try{const r=localStorage.getItem(LS_HIST);if(r)return JSON.parse(r);}catch(e){}return[];}
+function saveHist(h){try{localStorage.setItem(LS_HIST,JSON.stringify(h));}catch(e){}fbSet("history",h);}
+function loadMembers(){try{const r=localStorage.getItem(LS_MEMBERS);if(r)return JSON.parse(r);}catch(e){}return[];}
+function saveMembers(m){try{localStorage.setItem(LS_MEMBERS,JSON.stringify(m));}catch(e){}fbSet("members",m);}
+function loadFPOverrides(){try{const r=localStorage.getItem(LS_FP);if(r)return JSON.parse(r);}catch(e){}return{};}
+function saveFPOverrides(o){try{localStorage.setItem(LS_FP,JSON.stringify(o));}catch(e){}fbSet("fpOverrides",o);}
+function loadPin(){try{return localStorage.getItem(LS_PIN)||"";}catch(e){return "";}}
+function savePin(p){try{localStorage.setItem(LS_PIN,p);}catch(e){}fbSet("pin",p);}
+function loadNotes(){try{const r=localStorage.getItem(LS_NOTES);if(r)return JSON.parse(r);}catch(e){}return{};}
+function saveNotes(n){try{localStorage.setItem(LS_NOTES,JSON.stringify(n));}catch(e){}fbSet("sessionNotes",n);}
+function loadCatOv(){try{const r=localStorage.getItem(LS_CAT_OV);if(r)return JSON.parse(r);}catch(e){}return{};}
+function saveCatOv(o){try{localStorage.setItem(LS_CAT_OV,JSON.stringify(o));}catch(e){}fbSet("catOverrides",o);}
+
+// ─── Category logic ───────────────────────────────────────────────────────────
+// Returns "R" | "I" | "N" based on last N sessions in history
+function calcCategory(name, history){
+  // Get all records for this person in chronological order (most recent last)
+  const sessions=history.filter(s=>s.records.some(r=>r.name===name));
+  if(sessions.length===0) return "N";
+  const recent6=sessions.slice(-6);
+  const recent4=sessions.slice(-4);
+  const attended4=recent4.filter(s=>s.records.find(r=>r.name===name&&r.status==="P")).length;
+  const attended6=recent6.filter(s=>s.records.find(r=>r.name===name&&r.status==="P")).length;
+  if(attended4>=1) return "R";
+  if(attended6>=1) return "I";
+  return "N";
+}
+
+// ─── Today string ─────────────────────────────────────────────────────────────
+const todayStr=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App(){
+  // ── Auth ──────────────────────────────────────────────────────────────────
+  const [authUser,setAuthUser]=useState(null);   // null=loading, false=signed out
+  const [authLoading,setAuthLoading]=useState(true);
+  const isAdmin=authUser&&authUser.email===window.__fb?.ADMIN_EMAIL;
+
+  useEffect(()=>{
+    if(!window.__fb) return;
+    const unsub=window.__fb.onAuthStateChanged(window.__fb.auth,u=>{
+      setAuthUser(u||false);
+      setAuthLoading(false);
+    });
+    return unsub;
+  },[]);
+
+  function doSignIn(){
+    window.__fb.signInWithPopup(window.__fb.auth,window.__fb.provider)
+      .catch(e=>alert("Sign-in failed: "+e.message));
+  }
+  function doSignOut(){window.__fb.signOut(window.__fb.auth);}
+
+  // ── Firebase real-time sync (pull remote → local) ─────────────────────────
+  useEffect(()=>{
+    if(!window.__fb||!authUser) return;
+    const {db,ref:fbRefFn,onValue:onVal}=window.__fb;
+    const unsubs=[];
+    function sub(key,setter,lsKey,parse){
+      const r=fbRefFn(db,`shreeji/${key}`);
+      const unsub=onVal(r,snap=>{
+        if(!snap.exists()) return;
+        const val=snap.val();
+        try{localStorage.setItem(lsKey,JSON.stringify(val));}catch(e){}
+        setter(parse?parse(val):val);
+      });
+      unsubs.push(unsub);
+    }
+    sub("attendance",setAttendance,LS_ATT,null);
+    sub("history",setHistory,LS_HIST,v=>Array.isArray(v)?v:Object.values(v||{}));
+    sub("members",setExtraMembers,LS_MEMBERS,v=>Array.isArray(v)?v:Object.values(v||{}));
+    sub("fpOverrides",setFPOverrides,LS_FP,null);
+    sub("sessionNotes",setSessionNotes,LS_NOTES,null);
+    sub("catOverrides",setCatOverrides,LS_CAT_OV,null);
+    return()=>unsubs.forEach(u=>u());
+  },[authUser]);
+
+  // ── Show login screen if not signed in ────────────────────────────────────
+  if(authLoading) return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16,background:"#f5f4f0"}}>
+      <div style={{fontSize:28}}>🙏</div>
+      <div style={{fontSize:14,color:"#888"}}>Loading...</div>
+    </div>
+  );
+
+  if(!authUser) return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"linear-gradient(135deg,#1e293b 0%,#0f172a 100%)"}}>
+      <div style={{background:"#fff",borderRadius:20,padding:"40px 36px",maxWidth:380,width:"92%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.4)"}}>
+        <div style={{fontSize:36,marginBottom:8}}>🙏</div>
+        <div style={{fontWeight:700,fontSize:20,marginBottom:4}}>|| Swami Shreeji ||</div>
+        <div style={{fontSize:13,color:"#888",marginBottom:28}}>Yuvak Attendance System</div>
+        <button onClick={doSignIn}
+          style={{display:"inline-flex",alignItems:"center",gap:10,width:"100%",justifyContent:"center",padding:"12px 20px",borderRadius:10,border:"1px solid #ddd",background:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style={{width:20,height:20}}/>
+          Sign in with Google
+        </button>
+        <div style={{fontSize:11,color:"#aaa",marginTop:16}}>Only authorised members can access this app.</div>
+      </div>
+    </div>
+  );
+
+  // If signed in but not admin → read-only viewer
+  const viewOnly=!isAdmin;
+  const [tab,setTab]=useState("panel");
+  const [panelSubTab,setPanelSubTab]=useState("all");
+  const [attendance,setAttendance]=useState(loadAtt);
+  const [history,setHistory]=useState(loadHist);
+  const [extraMembers,setExtraMembers]=useState(loadMembers);
+  const [fpOverrides,setFPOverrides]=useState(loadFPOverrides);
+  const [sessionDate,setSessionDate]=useState(todayStr);
+  const [sabhaType,setSabhaType]=useState(()=>localStorage.getItem(LS_SABHA)||"Weekly");
+  const [sessionNotes,setSessionNotes]=useState(loadNotes);
+  const [sessionNote,setSessionNote]=useState("");
+  const [catOverrides,setCatOverrides]=useState(loadCatOv);
+  const [search,setSearch]=useState("");
+  const [filterFP,setFilterFP]=useState("All");
+  const [qSearch,setQSearch]=useState("");
+  const [qResults,setQResults]=useState([]);
+  const [qHighlight,setQHighlight]=useState(0);
+  const qRef=useRef(null);
+  const [toast,setToast]=useState(null);
+  const [showReset,setShowReset]=useState(false);
+  const [showSubmit,setShowSubmit]=useState(false);
+  const [histSearch,setHistSearch]=useState("");
+  const [histSort,setHistSort]=useState("name");
+  const [histSortDir,setHistSortDir]=useState(1);
+  const [histFrom,setHistFrom]=useState("");
+  const [histTo,setHistTo]=useState("");
+  const [histEditCell,setHistEditCell]=useState(null);
+  // Profile drawer
+  const [profileMember,setProfileMember]=useState(null);
+  // PIN lock
+  const [pin,setPin]=useState(loadPin);
+  const [pinInput,setPinInput]=useState("");
+  const [pinUnlocked,setPinUnlocked]=useState(()=>loadPin()==="");
+  const [showPinSetup,setShowPinSetup]=useState(false);
+  const [pinSetupVal,setPinSetupVal]=useState("");
+  const [pinSetupConfirm,setPinSetupConfirm]=useState("");
+  // Settings tab
+  const [settingsTab,setSettingsTab]=useState("general");
+  // Monthly summary
+  const [monthlyFP,setMonthlyFP]=useState("All");
+  // Dark mode
+  const [darkMode,setDarkMode]=useState(()=>localStorage.getItem("shreeji_dark")==="1");
+  // Year-over-year
+  const [yoyRange1From,setYoyRange1From]=useState("");
+  const [yoyRange1To,setYoyRange1To]=useState("");
+  const [yoyRange2From,setYoyRange2From]=useState("");
+  const [yoyRange2To,setYoyRange2To]=useState("");
+  // Print modal
+  const [showPrintModal,setShowPrintModal]=useState(false);
+  // Followup-wise WA modal
+  const [showFPWAModal,setShowFPWAModal]=useState(false);
+  // Prev-session absent panel
+  const [showPrevAbsent,setShowPrevAbsent]=useState(true);
+  // Swipe nav
+  const swipeRef=useRef(null);
+  const swipeStartX=useRef(null);
+  const TAB_ORDER=["dashboard","panel","report","history","monthly","predict","action","yoy","restructure","register","edit","settings"];
+
+  // ── Followup Restructuring state
+  const [fpExpanded,setFPExpanded]=useState({});
+  const [fpMoveName,setFPMoveName]=useState("");
+  const [fpMoveTarget,setFPMoveTarget]=useState("");
+  const [fpNewName,setFPNewName]=useState("");
+  // ── New Yuvak Registration state
+  const [regForm,setRegForm]=useState({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""});
+  const [regSearch,setRegSearch]=useState("");
+  const [regDeleteConfirm,setRegDeleteConfirm]=useState(null);
+  // ── Edit Yuvak state
+  const [editSearch,setEditSearch]=useState("");
+  const [editFilter,setEditFilter]=useState("All");
+  const [editTarget,setEditTarget]=useState(null);
+  const [editForm,setEditForm]=useState(null);
+  const [editDeleteConfirm,setEditDeleteConfirm]=useState(null);
+  const allMembers=useMemo(()=>{
+    const base=MASTER.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:false}));
+    const extra=extraMembers.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:true}));
+    return [...base,...extra];
+  },[extraMembers,fpOverrides]);
+
+  // Returns effective category: manual override takes priority over calculated
+  function getCategory(name,hist){
+    if(catOverrides[name]) return catOverrides[name];
+    return calcCategory(name,hist||history);
+  }
+
+  const allFollowups=useMemo(()=>[...new Set(allMembers.map(m=>m.followup))].sort(),[allMembers]);
+  const followups=["All",...allFollowups];
+  const filtered=allMembers
+    .filter(m=>
+      m.name.toLowerCase().includes(search.toLowerCase())&&
+      (filterFP==="All"||m.followup===filterFP)
+    )
+    .sort((a,b)=>{
+      const sA=attendance[a.name]?.status==="P";
+      const sB=attendance[b.name]?.status==="P";
+      // Present always on top
+      if(sA&&!sB) return -1;
+      if(!sA&&sB) return 1;
+      // Both present: sort by time descending (most recent first)
+      if(sA&&sB){
+        const tA=attendance[a.name]?.time||"";
+        const tB=attendance[b.name]?.time||"";
+        // "HH:MM" string comparison works for same-day times
+        if(tA&&tB) return tB.localeCompare(tA);
+        if(tA) return -1;
+        if(tB) return 1;
+        return 0;
+      }
+      // Both non-present: alphabetical
+      return a.name.localeCompare(b.name);
+    });
+
+  const totalP=Object.values(attendance).filter(a=>a.status==="P").length;
+  const totalA=Object.values(attendance).filter(a=>a.status==="A").length;
+  const totalMarked=totalP+totalA;
+  const pct=totalMarked>0?Math.round(totalP/totalMarked*100):0;
+
+  // Regular yuvaks who are currently absent
+  const regularAbsent=useMemo(()=>
+    allMembers.filter(m=>getCategory(m.name,history)==="R"&&attendance[m.name]?.status!=="P")
+      .sort((a,b)=>a.name.localeCompare(b.name))
+  ,[allMembers,history,attendance]);
+
+  // Yuvaks who were Present in the last submitted session but are not yet Present today
+  const prevSessionAbsentNow=useMemo(()=>{
+    // Find the most recent submitted session that is not today's session date
+    const pastSessions=history.filter(s=>s.date!==sessionDate);
+    if(pastSessions.length===0) return [];
+    const lastSession=pastSessions[pastSessions.length-1];
+    const presentLastSession=lastSession.records.filter(r=>r.status==="P").map(r=>r.name);
+    return allMembers
+      .filter(m=>presentLastSession.includes(m.name)&&attendance[m.name]?.status!=="P")
+      .sort((a,b)=>a.name.localeCompare(b.name));
+  },[history,sessionDate,allMembers,attendance]);
+
+  function mark(name,status){
+    if(viewOnly){toast_("View-only mode — cannot mark attendance","error");return;}
+    const next={...attendance,[name]:{
+      status,
+      time:status==="P"?new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):"",
+    }};
+    setAttendance(next);saveAtt(next);
+  }
+
+  function toast_(msg,type="success"){
+    setToast({msg,type});setTimeout(()=>setToast(null),3200);
+  }
+
+  // ── Generate Excel ─────────────────────────────────────────────────────────
+  function genExcel(){
+    const present=allMembers.filter(m=>attendance[m.name]?.status==="P");
+    if(present.length===0){toast_("No present members to export","error");return;}
+    const rows=present.map((m,i)=>({
+      "Sr.No":i+1,
+      "Name":m.name,
+      "Follow-up Group":m.followup,
+      "Contact":m.contact,
+      "Status":"Present",
+      "Time":attendance[m.name].time,
+      "Date":sessionDate,
+    }));
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=[{wch:6},{wch:28},{wch:22},{wch:14},{wch:9},{wch:8},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws,"Present Attendance");
+    XLSX.writeFile(wb,`Attendance_${sessionDate.replace(/ /g,"_")}.xlsx`);
+    toast_("Excel downloaded!");
+  }
+
+  // ── WhatsApp ───────────────────────────────────────────────────────────────
+  function doWA(){
+    const present=allMembers.filter(m=>attendance[m.name]?.status==="P");
+    const absent=allMembers.filter(m=>attendance[m.name]?.status==="A");
+    const unmarked=allMembers.filter(m=>!attendance[m.name]?.status);
+    let msg=`🙏 *|| Swami Shreeji ||*\n📋 *Attendance – ${sessionDate}*\n━━━━━━━━━━━━━━━\n`;
+    msg+=`✅ *Present (${present.length})*\n`;
+    present.forEach((m,i)=>{msg+=`${i+1}. ${m.name}\n`;});
+    msg+=`\n❌ *Absent (${absent.length})*\n`;
+    absent.forEach((m,i)=>{msg+=`${i+1}. ${m.name}\n`;});
+    if(unmarked.length){msg+=`\n⬜ *Not marked (${unmarked.length})*\n`;unmarked.forEach((m,i)=>{msg+=`${i+1}. ${m.name}\n`;});}
+    msg+=`━━━━━━━━━━━━━━━\n📊 *${totalP}P / ${totalA}A — ${pct}%*`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank");
+  }
+
+  // ── PDF report (print) ────────────────────────────────────────────────────
+  function doPDF(){
+    const byFP={};
+    allMembers.forEach(m=>{
+      if(!byFP[m.followup])byFP[m.followup]={p:[],a:[],u:[]};
+      const s=attendance[m.name]?.status;
+      if(s==="P")byFP[m.followup].p.push(m.name);
+      else if(s==="A")byFP[m.followup].a.push(m.name);
+      else byFP[m.followup].u.push(m.name);
+    });
+    const rows=allMembers.map((m,i)=>{
+      const a=attendance[m.name];
+      const sc=a?.status==="P"?"#166534":a?.status==="A"?"#991b1b":"#888";
+      const sb=a?.status==="P"?"#d4f5e1":a?.status==="A"?"#fde8e8":"#f3f4f6";
+      return `<tr><td style="text-align:center;color:#999">${i+1}</td><td style="font-weight:500">${m.name}</td><td>${m.followup}</td><td>${m.contact}</td><td><span style="background:${sb};color:${sc};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${a?.status==="P"?"Present":a?.status==="A"?"Absent":"—"}</span></td><td>${a?.time||""}</td></tr>`;
+    }).join("");
+    const sumRows=Object.entries(byFP).sort((a,b)=>a[0].localeCompare(b[0])).map(([fp,d])=>{
+      const tot=d.p.length+d.a.length;const fpPct=tot>0?Math.round(d.p.length/tot*100):0;
+      return `<tr><td style="font-weight:500">${fp}</td><td style="text-align:center;color:#166534">${d.p.length}</td><td style="text-align:center;color:#991b1b">${d.a.length}</td><td style="text-align:center;color:#777">${d.u.length}</td><td style="text-align:center">${fpPct}%</td></tr>`;
+    }).join("");
+    const win=window.open("","_blank","width=950,height=750");
+    win.document.write(`<!DOCTYPE html><html><head><title>Attendance – ${sessionDate}</title>
+    <style>body{font-family:'Segoe UI',sans-serif;padding:20px;color:#1a1a1a}h1{font-size:19px;margin:0 0 4px}.sub{color:#666;font-size:12px;margin-bottom:14px}.stats{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}.stat{background:#f4f4f0;border-radius:8px;padding:9px 16px;font-size:12px}.stat b{display:block;font-size:21px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1a1a1a;color:#fff;padding:8px 10px;text-align:left;font-weight:500}td{padding:7px 10px;border-bottom:.5px solid #eee}tr:nth-child(even){background:#f9f9f9}h2{font-size:14px;margin:24px 0 8px}@media print{@page{margin:1cm}}</style>
+    </head><body>
+    <h1>|| Swami Shreeji || – Attendance Report</h1>
+    <div class="sub">Session: ${sessionDate} &nbsp;|&nbsp; Generated: ${new Date().toLocaleString("en-IN")}</div>
+    <div class="stats">
+      <div class="stat"><b style="color:#166534">${totalP}</b>Present</div>
+      <div class="stat"><b style="color:#991b1b">${totalA}</b>Absent</div>
+      <div class="stat"><b style="color:#888">${allMembers.length-totalMarked}</b>Not marked</div>
+      <div class="stat"><b>${pct}%</b>Attendance</div>
+    </div>
+    <table><thead><tr><th width="28">#</th><th>Name</th><th>Followup</th><th>Contact</th><th width="75">Status</th><th width="55">Time</th></tr></thead><tbody>${rows}</tbody></table>
+    <h2>Followup Summary</h2>
+    <table><thead><tr><th>Followup</th><th width="70">Present</th><th width="70">Absent</th><th width="85">Not marked</th><th width="55">%</th></tr></thead><tbody>${sumRows}</tbody></table>
+    <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+    win.document.close();
+  }
+
+  // ── Reset ─────────────────────────────────────────────────────────────────
+  function doReset(){
+    const fresh=Object.fromEntries(allMembers.map(m=>[m.name,{status:"A",time:""}]));
+    setAttendance(fresh);saveAtt(fresh);setShowReset(false);
+    toast_("Attendance reset — all marked absent","info");
+  }
+
+  // ── Quick-mark search ─────────────────────────────────────────────────────
+  function handleQSearch(val){
+    setQSearch(val);setQHighlight(0);
+    if(!val.trim()){setQResults([]);return;}
+    const q=val.toLowerCase();
+    setQResults(allMembers.filter(m=>m.name.toLowerCase().includes(q)).slice(0,8));
+  }
+  function confirmQMark(name){
+    mark(name,"P");
+    setQSearch("");setQResults([]);setQHighlight(0);
+    toast_(`✅ ${name} marked Present`);
+    qRef.current&&qRef.current.focus();
+  }
+  function handleQKey(e){
+    if(!qResults.length) return;
+    if(e.key==="ArrowDown"){e.preventDefault();setQHighlight(h=>Math.min(h+1,qResults.length-1));}
+    else if(e.key==="ArrowUp"){e.preventDefault();setQHighlight(h=>Math.max(h-1,0));}
+    else if(e.key==="Enter"){e.preventDefault();if(qResults[qHighlight])confirmQMark(qResults[qHighlight].name);}
+    else if(e.key==="Escape"){setQSearch("");setQResults([]);setQHighlight(0);}
+  }
+
+  // ── Attendance Report ──────────────────────────────────────────────────────
+  const reportData=useMemo(()=>{
+    const fGroups=[...new Set(allMembers.map(m=>m.followup))].sort();
+    const rows=fGroups.map(fp=>{
+      const members=allMembers.filter(m=>m.followup===fp);
+      let RP=0,IP=0,NP=0,RA=0,IA=0,NA=0;
+      members.forEach(m=>{
+        const cat=getCategory(m.name,history);
+        const s=attendance[m.name]?.status;
+        if(s==="P"){
+          if(cat==="R")RP++;else if(cat==="I")IP++;else NP++;
+        } else if(s==="A"){
+          if(cat==="R")RA++;else if(cat==="I")IA++;else NA++;
+        }
+      });
+      return {fp,RP,IP,NP,RA,IA,NA,totalP:RP+IP+NP,totalA:RA+IA+NA,members:members.length};
+    });
+    const totRP=rows.reduce((s,r)=>s+r.RP,0);
+    const totIP=rows.reduce((s,r)=>s+r.IP,0);
+    const totNP=rows.reduce((s,r)=>s+r.NP,0);
+    const totRA=rows.reduce((s,r)=>s+r.RA,0);
+    const totIA=rows.reduce((s,r)=>s+r.IA,0);
+    const totNA=rows.reduce((s,r)=>s+r.NA,0);
+    return{rows,totRP,totIP,totNP,totRA,totIA,totNA,grandP:totRP+totIP+totNP,grandA:totRA+totIA+totNA};
+  },[history,attendance,allMembers]);
+
+  // ── Historic Data ──────────────────────────────────────────────────────────
+  const prevHistory=useMemo(()=>history.filter(s=>s.date!==sessionDate),[history,sessionDate]);
+  const allDates=useMemo(()=>[...new Set(prevHistory.map(s=>s.date))].sort(),[prevHistory]);
+
+  const histRows=useMemo(()=>{
+    return allMembers.filter(m=>m.name.toLowerCase().includes(histSearch.toLowerCase())||m.followup.toLowerCase().includes(histSearch.toLowerCase()))
+      .map(m=>{
+        const cat=calcCategory(m.name,prevHistory);
+        const totalAtt=prevHistory.filter(s=>s.records.find(r=>r.name===m.name&&r.status==="P")).length;
+        const byDate={};
+        prevHistory.forEach(s=>{
+          const r=s.records.find(x=>x.name===m.name);
+          byDate[s.date]=r?.status||null;
+        });
+        return{name:m.name,followup:m.followup,cat,totalAtt,byDate};
+      })
+      .sort((a,b)=>{
+        let av=a[histSort],bv=b[histSort];
+        if(histSort==="totalAtt"){av=a.totalAtt;bv=b.totalAtt;}
+        if(histSort==="cat"){const o={R:0,I:1,N:2};av=o[a.cat];bv=o[b.cat];}
+        return histSortDir*(typeof av==="string"?av.localeCompare(bv):av-bv);
+      });
+  },[prevHistory,histSearch,histSort,histSortDir,allMembers]);
+
+  function sortHist(col){
+    if(histSort===col)setHistSortDir(d=>-d);
+    else{setHistSort(col);setHistSortDir(1);}
+  }
+  function sortArrow(col){return histSort===col?(histSortDir===1?"↑":"↓"):""}
+
+  // ── Followup Restructuring helpers ─────────────────────────────────────────
+  function doMoveMember(){
+    if(!fpMoveName||!fpMoveTarget){toast_("Select a member and target group","error");return;}
+    const newOv={...fpOverrides,[fpMoveName]:fpMoveTarget};
+    setFPOverrides(newOv);saveFPOverrides(newOv);
+    toast_(`${fpMoveName} moved to ${fpMoveTarget}`);
+    setFPMoveName("");setFPMoveTarget("");
+  }
+
+  function doCreateFPGroup(){
+    if(!fpNewName.trim()){toast_("Enter a group name","error");return;}
+    if(allFollowups.includes(fpNewName.trim())){toast_("Group already exists","error");return;}
+    // We create it by assigning a dummy override that we'll just track as existing
+    // Actually we track new groups via a separate LS key for group names
+    const key="shreeji_extra_groups";
+    let eg=[];try{eg=JSON.parse(localStorage.getItem(key)||"[]");}catch(e){}
+    if(!eg.includes(fpNewName.trim())){eg.push(fpNewName.trim());localStorage.setItem(key,JSON.stringify(eg));}
+    toast_(`Group "${fpNewName.trim()}" created. Now assign members to it.`);
+    setFPNewName("");
+  }
+
+  // ── New Yuvak Registration helpers ────────────────────────────────────────
+  function doRegister(){
+    if(viewOnly){toast_("View-only mode","error");return;}
+    if(!regForm.fullName.trim()){toast_("Full name is required","error");return;}
+    if(!regForm.followup.trim()){toast_("Followup group is required","error");return;}
+    const dup=allMembers.find(m=>m.name.toLowerCase()===regForm.fullName.trim().toLowerCase());
+    if(dup){toast_("A yuvak with this name already exists","error");return;}
+    const newY={
+      name:regForm.fullName.trim(),
+      dob:regForm.dob,
+      contact:regForm.contact.trim(),
+      reference:regForm.reference.trim(),
+      address:regForm.address.trim(),
+      followup:regForm.followup.trim(),
+      registeredOn:new Date().toLocaleDateString("en-IN"),
+    };
+    const upd=[...extraMembers,newY];
+    setExtraMembers(upd);saveMembers(upd);
+    setRegForm({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""});
+    toast_(`${newY.name} registered successfully!`);
+  }
+
+  function doDeleteReg(name){
+    const upd=extraMembers.filter(m=>m.name!==name);
+    setExtraMembers(upd);saveMembers(upd);
+    setRegDeleteConfirm(null);
+    toast_(`${name} removed from database`,"info");
+  }
+
+  // ── Edit Yuvak helpers ────────────────────────────────────────────────────
+  function openEdit(m){
+    setEditTarget(m);
+    setEditForm({
+      fullName: m.name,
+      dob: m.dob||"",
+      contact: m.contact||"",
+      reference: m.reference||"",
+      address: m.address||"",
+      followup: fpOverrides[m.name]||m.followup,
+    });
+  }
+
+  function doSaveEdit(){
+    if(viewOnly){toast_("View-only mode","error");return;}
+    if(!editForm.fullName.trim()){toast_("Full name cannot be empty","error");return;}
+    if(!editForm.followup.trim()){toast_("Followup group cannot be empty","error");return;}
+    const oldName=editTarget.name;
+    const newName=editForm.fullName.trim();
+    const namChanged=newName!==oldName;
+
+    // Update followup override
+    const newOv={...fpOverrides};
+    if(editForm.followup!==editTarget.followup){
+      newOv[newName]=editForm.followup;
+    } else {
+      delete newOv[newName];
+    }
+    if(namChanged) delete newOv[oldName];
+
+    // Update extra members if applicable
+    if(editTarget.isExtra){
+      const upd=extraMembers.map(m=>m.name===oldName?{
+        ...m,
+        name:newName,
+        dob:editForm.dob,
+        contact:editForm.contact.trim(),
+        reference:editForm.reference.trim(),
+        address:editForm.address.trim(),
+        followup:editForm.followup.trim(),
+      }:m);
+      setExtraMembers(upd);saveMembers(upd);
+    } else {
+      // For MASTER members only followup override + contact/address stored as override
+      newOv[`${oldName}__contact`]=editForm.contact.trim();
+      newOv[`${oldName}__address`]=editForm.address.trim();
+    }
+
+    // Rename attendance key if name changed
+    if(namChanged){
+      const newAtt={...attendance};
+      if(newAtt[oldName]){newAtt[newName]=newAtt[oldName];delete newAtt[oldName];}
+      setAttendance(newAtt);saveAtt(newAtt);
+      // Update history records
+      const newHist=history.map(s=>({
+        ...s,
+        records:s.records.map(r=>r.name===oldName?{...r,name:newName}:r)
+      }));
+      setHistory(newHist);saveHist(newHist);
+    }
+
+    if(editForm.followup.trim()!==editTarget.followup){
+      newOv[newName]=editForm.followup.trim();
+    }
+
+    setFPOverrides(newOv);saveFPOverrides(newOv);
+    setEditTarget(null);setEditForm(null);
+    toast_(`${newName} updated successfully!`);
+  }
+
+  function doDeleteEdit(name,isExtra){
+    if(isExtra){
+      const upd=extraMembers.filter(m=>m.name!==name);
+      setExtraMembers(upd);saveMembers(upd);
+    }
+    // Clean up overrides
+    const newOv={...fpOverrides};
+    Object.keys(newOv).filter(k=>k===name||k.startsWith(name+"__")).forEach(k=>delete newOv[k]);
+    setFPOverrides(newOv);saveFPOverrides(newOv);
+    // Remove from attendance
+    const newAtt={...attendance};delete newAtt[name];
+    setAttendance(newAtt);saveAtt(newAtt);
+    setEditDeleteConfirm(null);setEditTarget(null);setEditForm(null);
+    toast_(`${name} deleted from database`,"info");
+  }
+
+  // ── Category Override helpers ────────────────────────────────────────────
+  function doSetCatOverride(name,cat){
+    if(viewOnly){toast_("View-only mode","error");return;}
+    const newOv={...catOverrides};
+    if(cat==="auto") delete newOv[name];
+    else newOv[name]=cat;
+    setCatOverrides(newOv);saveCatOv(newOv);
+    const label=cat==="auto"?"reset to Auto":cat==="R"?"Regular":cat==="I"?"Irregular":"No";
+    toast_(`${name.split(" ")[0]}'s category ${label}`);
+  }
+
+  // helper: get effective contact/address for MASTER members
+  function getExtra(name,field){
+    return fpOverrides[`${name}__${field}`]||"";
+  }
+
+  // ── Historic date range helpers ───────────────────────────────────────────
+  // Parse "02 May 2025" style dates to comparable YYYYMMDD numbers
+  const MONTHS={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+  function parseDateKey(d){
+    // "02 May 2025" -> 20250502
+    if(!d) return 0;
+    const p=d.split(" ");
+    if(p.length!==3) return 0;
+    const day=parseInt(p[0]),mon=MONTHS[p[1]]||0,yr=parseInt(p[2]);
+    return yr*10000+mon*100+day;
+  }
+  function parseInputDate(s){
+    // "2025-05-01" (HTML date input) -> 20250501
+    if(!s) return 0;
+    const p=s.split("-");
+    return parseInt(p[0])*10000+parseInt(p[1])*100+parseInt(p[2]);
+  }
+  const filteredDates=useMemo(()=>{
+    const from=parseInputDate(histFrom);
+    const to=parseInputDate(histTo);
+    return allDates.filter(d=>{
+      const v=parseDateKey(d);
+      if(from&&v<from) return false;
+      if(to&&v>to) return false;
+      return true;
+    });
+  },[allDates,histFrom,histTo]);
+
+  // ── Edit a past attendance cell ───────────────────────────────────────────
+  function doHistEdit(memberName,date,newStatus){
+    if(viewOnly){toast_("View-only mode","error");return;}
+    const newHist=history.map(s=>{
+      if(s.date!==date) return s;
+      const exists=s.records.some(r=>r.name===memberName);
+      const records=exists
+        ?s.records.map(r=>r.name===memberName?{...r,status:newStatus,editedAt:new Date().toLocaleString("en-IN")}:r)
+        :[...s.records,{name:memberName,followup:allMembers.find(m=>m.name===memberName)?.followup||"",status:newStatus,time:"",editedAt:new Date().toLocaleString("en-IN")}];
+      return{...s,records};
+    });
+    setHistory(newHist);saveHist(newHist);
+    setHistEditCell(null);
+    toast_(`${memberName} — ${date} updated to ${newStatus==="P"?"Present":"Absent"}`);
+  }
+
+  // ── PIN lock ──────────────────────────────────────────────────────────────
+  function tryUnlock(){
+    if(pinInput===pin){setPinUnlocked(true);setPinInput("");}
+    else{toast_("Wrong PIN","error");setPinInput("");}
+  }
+  function doSetPin(){
+    if(pinSetupVal.length<4){toast_("PIN must be at least 4 digits","error");return;}
+    if(pinSetupVal!==pinSetupConfirm){toast_("PINs do not match","error");return;}
+    setPin(pinSetupVal);savePin(pinSetupVal);
+    setShowPinSetup(false);setPinSetupVal("");setPinSetupConfirm("");
+    toast_("PIN set successfully!");
+  }
+  function doRemovePin(){setPin("");savePin("");setPinUnlocked(true);toast_("PIN removed","info");}
+
+  // ── Follow-up wise WhatsApp ───────────────────────────────────────────────
+  // ── Build followup WA message (new format) ───────────────────────────────
+  function buildFPMsg(fp){
+    const members=allMembers.filter(m=>m.followup===fp);
+    const present=members.filter(m=>attendance[m.name]?.status==="P");
+    const absent=members.filter(m=>attendance[m.name]?.status!=="P");
+
+    // Split present by category
+    const catLabel={R:"Regular",I:"Irregular",N:"No"};
+    const pByCat={R:[],I:[],N:[]};
+    present.forEach(m=>{const c=getCategory(m.name,history);pByCat[c]=(pByCat[c]||[]);pByCat[c].push(m);});
+    const aByCat={R:[],I:[],N:[]};
+    absent.forEach(m=>{const c=getCategory(m.name,history);aByCat[c]=(aByCat[c]||[]);aByCat[c].push(m);});
+
+    let msg=`🙏 *|| Swami Shreeji ||*\n`;
+    msg+=`📋 *${fp} — ${sessionDate}*\n`;
+    msg+=`━━━━━━━━━━━━━━━━━\n`;
+
+    // Present section
+    msg+=`✅ *PRESENT — ${present.length}*\n`;
+    ["R","I","N"].forEach(cat=>{
+      if(pByCat[cat].length){
+        msg+=`\n📌 *${catLabel[cat]} (${pByCat[cat].length})*\n`;
+        pByCat[cat].forEach((m,i)=>{msg+=`${i+1}. ${m.name}\n`;});
+      }
+    });
+    msg+=`\n━━━━━━━━━━━━━━━━━\n`;
+
+    // Absent section
+    msg+=`❌ *ABSENT — ${absent.length}*\n`;
+    ["R","I","N"].forEach(cat=>{
+      if(aByCat[cat].length){
+        msg+=`\n📌 *${catLabel[cat]} (${aByCat[cat].length})*\n`;
+        aByCat[cat].forEach((m,i)=>{msg+=`${i+1}. ${m.name}\n`;});
+      }
+    });
+
+    msg+=`━━━━━━━━━━━━━━━━━\n`;
+    msg+=`📊 *Total: ${present.length}P / ${absent.length}A / ${members.length} members*\n`;
+    const pct2=members.length>0?Math.round(present.length/members.length*100):0;
+    msg+=`📈 *Attendance: ${pct2}%*`;
+    return msg;
+  }
+
+  function doWAFollowup(fp, coordinatorContact){
+    const msg=buildFPMsg(fp);
+    const encoded=encodeURIComponent(msg);
+    if(coordinatorContact){
+      // Open specific coordinator's WhatsApp chat
+      const num=coordinatorContact.replace(/\D/g,"");
+      window.open(`https://wa.me/91${num}?text=${encoded}`,"_blank");
+    } else {
+      // Generic share (no specific number)
+      window.open(`https://wa.me/?text=${encoded}`,"_blank");
+    }
+  }
+
+  // ── Consolidated all-FP WhatsApp message ────────────────────────────────
+  function buildConsolidatedMsg(){
+    let msg=`🙏 *|| Swami Shreeji ||*\n`;
+    msg+=`📋 *Consolidated Report — ${sessionDate}*\n`;
+    msg+=`━━━━━━━━━━━━━━━━━\n\n`;
+    allFollowups.forEach((fp,fi)=>{
+      const members=allMembers.filter(m=>m.followup===fp);
+      const present=members.filter(m=>attendance[m.name]?.status==="P");
+      const absent=members.filter(m=>attendance[m.name]?.status!=="P");
+      const pByCat={R:[],I:[],N:[]};
+      present.forEach(m=>{const c=getCategory(m.name,history);pByCat[c].push(m);});
+      const aByCat={R:[],I:[],N:[]};
+      absent.forEach(m=>{const c=getCategory(m.name,history);aByCat[c].push(m);});
+      const pct2=members.length>0?Math.round(present.length/members.length*100):0;
+      msg+=`*${fi+1}. ${fp}* — ${pct2}%\n`;
+      msg+=`✅ Present (${present.length}): `;
+      const pParts=[];
+      ["R","I","N"].forEach(cat=>{if(pByCat[cat].length)pParts.push(`${cat==="R"?"Reg":cat==="I"?"Irr":"No"} ${pByCat[cat].length}`);});
+      msg+=(pParts.length?pParts.join(" | "):"—")+"\n";
+      msg+=`❌ Absent (${absent.length}): `;
+      const aParts=[];
+      ["R","I","N"].forEach(cat=>{if(aByCat[cat].length)aParts.push(`${cat==="R"?"Reg":cat==="I"?"Irr":"No"} ${aByCat[cat].length}`);});
+      msg+=(aParts.length?aParts.join(" | "):"—")+"\n";
+      if(fi<allFollowups.length-1) msg+="\n";
+    });
+    msg+=`━━━━━━━━━━━━━━━━━\n`;
+    msg+=`📊 *Grand Total: ${totalP}P / ${totalA}A / ${allMembers.length} members — ${pct}%*`;
+    return msg;
+  }
+
+  function doWAConsolidated(){
+    const msg=buildConsolidatedMsg();
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank");
+  }
+
+  // ── Individual absent WhatsApp message ───────────────────────────────────
+  function doWAAbsent(m){
+    const msg=`🙏 Jai Swaminarayan ${m.name.split(" ")[0]} bhai,\n\nAaj *|| Swami Shreeji ||* sabha mein aapki kami mehsoos ki gayi. Aasha hai sab theek hai.\n\nAgle sabha mein zaroor padharna. 🙏\n\n– ${sessionDate}`;
+    window.open(`https://wa.me/91${m.contact}?text=${encodeURIComponent(msg)}`,"_blank");
+  }
+
+  // ── Submit with notes + sabha type ───────────────────────────────────────
+  function doSubmit(){
+    const alreadyDone=history.some(s=>s.date===sessionDate);
+    if(alreadyDone){toast_(`Already submitted for ${sessionDate}`,"error");setShowSubmit(false);return;}
+    const records=allMembers.map(m=>({
+      name:m.name,followup:m.followup,contact:m.contact,
+      status:attendance[m.name]?.status||null,
+      time:attendance[m.name]?.time||"",
+    }));
+    const newHist=[...history,{date:sessionDate,sabhaType,note:sessionNote.trim(),records}];
+    setHistory(newHist);saveHist(newHist);
+    // save note
+    if(sessionNote.trim()){const nn={...sessionNotes,[sessionDate]:sessionNote.trim()};setSessionNotes(nn);saveNotes(nn);}
+    setShowSubmit(false);
+    toast_(`Attendance submitted for ${sessionDate}!`);
+  }
+
+  // ── Export full historic data to Excel ───────────────────────────────────
+  function genHistExcel(){
+    if(prevHistory.length===0){toast_("No historic data to export","error");return;}
+    const wb=XLSX.utils.book_new();
+    // Sheet 1: All sessions flat
+    const flatRows=[];
+    prevHistory.forEach(s=>{
+      s.records.forEach(r=>{
+        flatRows.push({"Date":s.date,"Sabha Type":s.sabhaType||"","Name":r.name,"Followup":r.followup,"Status":r.status==="P"?"Present":"Absent","Time":r.time||"","Note":s.note||""});
+      });
+    });
+    const ws1=XLSX.utils.json_to_sheet(flatRows);
+    ws1['!cols']=[{wch:14},{wch:12},{wch:28},{wch:22},{wch:9},{wch:7},{wch:30}];
+    XLSX.utils.book_append_sheet(wb,ws1,"All Records");
+    // Sheet 2: Member summary
+    const summaryRows=allMembers.map(m=>{
+      const cat=calcCategory(m.name,prevHistory);
+      const totalP=prevHistory.filter(s=>s.records.find(r=>r.name===m.name&&r.status==="P")).length;
+      const totalS=prevHistory.length;
+      return{"Name":m.name,"Followup":m.followup,"Category":cat==="R"?"Regular":cat==="I"?"Irregular":"No","Total Present":totalP,"Total Sessions":totalS,"Attendance %":totalS>0?Math.round(totalP/totalS*100)+"%":"—"};
+    });
+    const ws2=XLSX.utils.json_to_sheet(summaryRows);
+    ws2['!cols']=[{wch:28},{wch:22},{wch:12},{wch:14},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws2,"Member Summary");
+    XLSX.writeFile(wb,`HistoricData_Export_${todayStr.replace(/ /g,"_")}.xlsx`);
+    toast_("Full historic Excel downloaded!");
+  }
+
+  // ── Monthly summary data ──────────────────────────────────────────────────
+  const monthlySummary=useMemo(()=>{
+    const months={};
+    prevHistory.forEach(s=>{
+      const parts=s.date.split(" ");
+      const key=parts.length===3?`${parts[1]} ${parts[2]}`:"Unknown";
+      if(!months[key])months[key]={key,sessions:[],dates:[]};
+      months[key].sessions.push(s);
+      months[key].dates.push(s.date);
+    });
+    return Object.values(months).sort((a,b)=>{
+      const [am,ay]=a.key.split(" ");const [bm,by]=b.key.split(" ");
+      const MONTHS2={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+      return (parseInt(ay)*100+MONTHS2[am])-(parseInt(by)*100+MONTHS2[bm]);
+    }).map(m=>{
+      const totalSessions=m.sessions.length;
+      const presentCounts=m.sessions.map(s=>s.records.filter(r=>r.status==="P").length);
+      const avgPresent=totalSessions>0?Math.round(presentCounts.reduce((a,b)=>a+b,0)/totalSessions):0;
+      const maxP=Math.max(...presentCounts);
+      const minP=Math.min(...presentCounts);
+      const bestDate=m.sessions[presentCounts.indexOf(maxP)]?.date||"";
+      const worstDate=m.sessions[presentCounts.indexOf(minP)]?.date||"";
+      const totalMembers=allMembers.length;
+      const avgPct=totalMembers>0?Math.round(avgPresent/totalMembers*100):0;
+      return{...m,totalSessions,avgPresent,avgPct,maxP,minP,bestDate,worstDate};
+    });
+  },[prevHistory,allMembers]);
+
+  // ── Top regular yuvaks ────────────────────────────────────────────────────
+  const topYuvaks=useMemo(()=>{
+    return allMembers.map(m=>{
+      const totalP=prevHistory.filter(s=>s.records.find(r=>r.name===m.name&&r.status==="P")).length;
+      const cat=calcCategory(m.name,prevHistory);
+      return{...m,totalP,cat};
+    }).sort((a,b)=>b.totalP-a.totalP).slice(0,10);
+  },[prevHistory,allMembers]);
+
+  // ── Individual profile data ───────────────────────────────────────────────
+  function getProfileData(name){
+    const m=allMembers.find(x=>x.name===name);if(!m) return null;
+    const cat=getCategory(name,prevHistory);
+    const totalP=prevHistory.filter(s=>s.records.find(r=>r.name===name&&r.status==="P")).length;
+    const totalS=prevHistory.length;
+    const pct=totalS>0?Math.round(totalP/totalS*100):0;
+    // Last 3 months
+    const now=new Date();
+    const threeMonthsAgo=new Date(now.getFullYear(),now.getMonth()-2,1);
+    const recent=prevHistory.filter(s=>{
+      const parts=s.date.split(" ");
+      if(parts.length!==3) return false;
+      const MONTHS2={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+      const d=new Date(parseInt(parts[2]),MONTHS2[parts[1]],parseInt(parts[0]));
+      return d>=threeMonthsAgo;
+    });
+    const recentP=recent.filter(s=>s.records.find(r=>r.name===name&&r.status==="P")).length;
+    const recentPct=recent.length>0?Math.round(recentP/recent.length*100):0;
+    const sessions=prevHistory.map(s=>({date:s.date,status:s.records.find(r=>r.name===name)?.status||null,note:s.note})).reverse();
+    return{m,cat,totalP,totalS,pct,recentP,recentS:recent.length,recentPct,sessions};
+  }
+
+  // ── Backup & Restore ─────────────────────────────────────────────────────
+  function doBackup(){
+    const data={attendance,history,extraMembers,fpOverrides,sessionNotes,exportedAt:new Date().toISOString()};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download=`ShreejiBackup_${todayStr.replace(/ /g,"_")}.json`;a.click();
+    toast_("Backup downloaded!");
+  }
+  function doRestore(e){
+    const file=e.target.files[0];if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(data.history){setHistory(data.history);saveHist(data.history);}
+        if(data.attendance){setAttendance(data.attendance);saveAtt(data.attendance);}
+        if(data.extraMembers){setExtraMembers(data.extraMembers);saveMembers(data.extraMembers);}
+        if(data.fpOverrides){setFPOverrides(data.fpOverrides);saveFPOverrides(data.fpOverrides);}
+        if(data.sessionNotes){setSessionNotes(data.sessionNotes);saveNotes(data.sessionNotes);}
+        toast_("Data restored successfully!");
+      }catch(err){toast_("Invalid backup file","error");}
+    };
+    reader.readAsText(file);
+    e.target.value="";
+  }
+
+  // ── Dashboard data ────────────────────────────────────────────────────────
+  const dashData=useMemo(()=>{
+    if(prevHistory.length===0) return null;
+    const last10=prevHistory.slice(-10);
+    const last6=prevHistory.slice(-6);
+
+    // Trend: per-session totals
+    const trend=last10.map(s=>{
+      const totalPresent=s.records.filter(r=>r.status==="P").length;
+      const regPresent=s.records.filter(r=>r.status==="P"&&calcCategory(r.name,prevHistory)==="R").length;
+      const regAbsent=s.records.filter(r=>r.status==="A"&&calcCategory(r.name,prevHistory)==="R").length;
+      const irrPresent=s.records.filter(r=>r.status==="P"&&calcCategory(r.name,prevHistory)==="I").length;
+      const noPresent=s.records.filter(r=>r.status==="P"&&calcCategory(r.name,prevHistory)==="N").length;
+      const totalMembers=allMembers.length;
+      return{date:s.date,totalPresent,regPresent,regAbsent,irrPresent,noPresent,totalMembers,pct:Math.round(totalPresent/totalMembers*100)};
+    });
+
+    // KPIs
+    const avg=Math.round(trend.reduce((s,t)=>s+t.totalPresent,0)/trend.length);
+    const avgPct=Math.round(trend.reduce((s,t)=>s+t.pct,0)/trend.length);
+    const best=trend.reduce((a,b)=>b.totalPresent>a.totalPresent?b:a);
+    const worst=trend.reduce((a,b)=>b.totalPresent<a.totalPresent?b:a);
+    const latest=trend[trend.length-1];
+    const prev=trend.length>1?trend[trend.length-2]:null;
+    const trend_dir=prev?(latest.totalPresent>prev.totalPresent?1:latest.totalPresent<prev.totalPresent?-1:0):0;
+
+    // Category counts live
+    const liveR=allMembers.filter(m=>calcCategory(m.name,prevHistory)==="R").length;
+    const liveI=allMembers.filter(m=>calcCategory(m.name,prevHistory)==="I").length;
+    const liveN=allMembers.filter(m=>calcCategory(m.name,prevHistory)==="N").length;
+
+    // Followup performance (avg % over last 6 sessions)
+    const fpPerf=allFollowups.map(fp=>{
+      const members=allMembers.filter(m=>m.followup===fp);
+      if(!members.length) return null;
+      const avgPres=last6.reduce((sum,s)=>{
+        const cnt=s.records.filter(r=>members.some(m=>m.name===r.name)&&r.status==="P").length;
+        return sum+Math.round(cnt/members.length*100);
+      },0)/Math.max(last6.length,1);
+      return{fp,avg:Math.round(avgPres),members:members.length};
+    }).filter(Boolean).sort((a,b)=>b.avg-a.avg);
+
+    // Streak: current streak of sessions with >50% attendance
+    let streak=0;
+    for(let i=trend.length-1;i>=0;i--){
+      if(trend[i].pct>=50)streak++;else break;
+    }
+
+    return{trend,avg,avgPct,best,worst,latest,prev,trend_dir,liveR,liveI,liveN,fpPerf,streak};
+  },[prevHistory,allMembers,allFollowups]);
+
+  // ── Dark mode effect ─────────────────────────────────────────────────────
+  useEffect(()=>{
+    localStorage.setItem("shreeji_dark",darkMode?"1":"0");
+    document.body.style.background=darkMode?"#0f172a":"#f5f4f0";
+    document.body.style.color=darkMode?"#e2e8f0":"#1a1a1a";
+  },[darkMode]);
+
+  // ── Swipe handlers ───────────────────────────────────────────────────────
+  function onTouchStart(e){/* swipe disabled */}
+  function onTouchEnd(e){/* swipe disabled */}
+
+  // ── Attendance Prediction ────────────────────────────────────────────────
+  const predictionList=useMemo(()=>{
+    if(prevHistory.length<2) return [];
+    return allMembers.map(m=>{
+      const sessions=prevHistory.slice(-6);
+      const attended=sessions.map(s=>s.records.find(r=>r.name===m.name)?.status==="P"?1:0);
+      const total=attended.reduce((a,b)=>a+b,0);
+      const cat=calcCategory(m.name,prevHistory);
+      // Trend: compare last 3 vs prev 3
+      const last3=attended.slice(-3).reduce((a,b)=>a+b,0);
+      const prev3=attended.slice(0,3).reduce((a,b)=>a+b,0);
+      const dropping=prev3>last3;
+      const riskScore=dropping?(prev3-last3)*2+(cat==="R"?3:cat==="I"?1:0):0;
+      return{name:m.name,followup:m.followup,cat,riskScore,last3,prev3,total,sessions:sessions.length};
+    })
+    .filter(m=>m.riskScore>0)
+    .sort((a,b)=>b.riskScore-a.riskScore)
+    .slice(0,20);
+  },[prevHistory,allMembers]);
+
+  // ── Smart Follow-up Action List ──────────────────────────────────────────
+  const actionList=useMemo(()=>{
+    if(prevHistory.length<2) return [];
+    const prevPrev=prevHistory.length>1?prevHistory.slice(0,-1):[];
+    return allMembers.map(m=>{
+      const catNow=calcCategory(m.name,prevHistory);
+      const catPrev=calcCategory(m.name,prevPrev);
+      // Dropped category
+      const dropped=(catPrev==="R"&&(catNow==="I"||catNow==="N"))||(catPrev==="I"&&catNow==="N");
+      // Consecutive absences
+      const lastSessions=prevHistory.slice(-4).map(s=>s.records.find(r=>r.name===m.name)?.status);
+      const consAbsent=lastSessions.filter(s=>s==="A").length;
+      const action=dropped?"Category Drop":consAbsent>=3?"3+ Consecutive Absent":null;
+      return action?{name:m.name,followup:m.followup,catNow,catPrev,action,consAbsent}:null;
+    }).filter(Boolean).sort((a,b)=>a.action.localeCompare(b.action));
+  },[prevHistory,allMembers]);
+
+  // ── Year-over-Year ───────────────────────────────────────────────────────
+  function parseInputDate2(s){if(!s)return 0;const p=s.split("-");return parseInt(p[0])*10000+parseInt(p[1])*100+parseInt(p[2]);}
+  const yoyData=useMemo(()=>{
+    const MONTHS={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+    function sessInRange(from,to){
+      const f=parseInputDate2(from),t=parseInputDate2(to);
+      return prevHistory.filter(s=>{
+        const p=s.date.split(" ");if(p.length!==3)return false;
+        const v=parseInt(p[2])*10000+(MONTHS[p[1]]||0)*100+parseInt(p[0]);
+        return(!f||v>=f)&&(!t||v<=t);
+      });
+    }
+    const r1=sessInRange(yoyRange1From,yoyRange1To);
+    const r2=sessInRange(yoyRange2From,yoyRange2To);
+    function stats(sessions){
+      if(!sessions.length)return{sessions:0,avgPresent:0,avgPct:0,totalSessions:0};
+      const tots=sessions.map(s=>s.records.filter(r=>r.status==="P").length);
+      const avg=Math.round(tots.reduce((a,b)=>a+b,0)/sessions.length);
+      return{sessions:sessions.length,avgPresent:avg,avgPct:allMembers.length?Math.round(avg/allMembers.length*100):0,totalSessions:sessions.length,data:sessions.map((s,i)=>({i,date:s.date,cnt:tots[i]}))};
+    }
+    return{r1:stats(r1),r2:stats(r2),raw1:r1,raw2:r2};
+  },[prevHistory,allMembers,yoyRange1From,yoyRange1To,yoyRange2From,yoyRange2To]);
+
+  // ── Journey data for profile ─────────────────────────────────────────────
+  function getJourney(name){
+    // Build category at each session point
+    const journey=[];
+    prevHistory.forEach((s,i)=>{
+      const hist=prevHistory.slice(0,i+1);
+      const cat=calcCategory(name,hist);
+      const present=s.records.find(r=>r.name===name)?.status==="P";
+      journey.push({date:s.date,cat,present});
+    });
+    return journey;
+  }
+
+  // ── Print report ─────────────────────────────────────────────────────────
+  function doPrintReport(){
+    const d=dashData;
+    const present=allMembers.filter(m=>attendance[m.name]?.status==="P");
+    const absent=allMembers.filter(m=>attendance[m.name]?.status==="A");
+    const byFP={};
+    allMembers.forEach(m=>{
+      if(!byFP[m.followup])byFP[m.followup]={p:0,a:0};
+      const s=attendance[m.name]?.status;
+      if(s==="P")byFP[m.followup].p++;else byFP[m.followup].a++;
+    });
+    const fpRows=Object.entries(byFP).sort((a,b)=>a[0].localeCompare(b[0])).map(([fp,v])=>
+      `<tr><td>${fp}</td><td style="text-align:center;color:#166534;font-weight:600">${v.p}</td><td style="text-align:center;color:#991b1b;font-weight:600">${v.a}</td><td style="text-align:center">${v.p+v.a>0?Math.round(v.p/(v.p+v.a)*100):0}%</td></tr>`
+    ).join("");
+    const pRow=present.map((m,i)=>`<tr><td>${i+1}</td><td style="font-weight:500">${m.name}</td><td>${m.followup}</td><td>${attendance[m.name]?.time||""}</td></tr>`).join("");
+    const aRow=absent.map((m,i)=>`<tr><td>${i+1}</td><td style="font-weight:500">${m.name}</td><td>${m.followup}</td><td><span style="background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600">${calcCategory(m.name,prevHistory)==="R"?"REGULAR":""}</span></td></tr>`).join("");
+    const win=window.open("","_blank","width=900,height=750");
+    win.document.write(`<!DOCTYPE html><html><head><title>Attendance Report – ${sessionDate}</title>
+    <style>body{font-family:'Segoe UI',sans-serif;padding:24px;color:#1a1a1a;font-size:12px}h1{font-size:20px;margin:0 0 2px}h2{font-size:14px;margin:20px 0 8px;border-bottom:1px solid #eee;padding-bottom:4px}.sub{color:#666;font-size:11px;margin-bottom:16px}.stats{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}.stat{background:#f4f4f0;border-radius:8px;padding:9px 16px}.stat b{display:block;font-size:20px}table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}th{background:#1a1a1a;color:#fff;padding:7px 10px;text-align:left;font-weight:500}td{padding:6px 10px;border-bottom:.5px solid #eee}tr:nth-child(even){background:#f9f9f9}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media print{@page{margin:1.2cm}body{padding:0}.no-print{display:none}}</style>
+    </head><body>
+    <h1>|| Swami Shreeji || — Attendance Report</h1>
+    <div class="sub">Date: ${sessionDate} &nbsp;|&nbsp; Sabha: ${sabhaType} &nbsp;|&nbsp; Generated: ${new Date().toLocaleString("en-IN")}</div>
+    <div class="stats">
+      <div class="stat"><b style="color:#166534">${present.length}</b>Present</div>
+      <div class="stat"><b style="color:#991b1b">${absent.length}</b>Absent</div>
+      <div class="stat"><b>${allMembers.length}</b>Total</div>
+      <div class="stat"><b>${allMembers.length?Math.round(present.length/allMembers.length*100):0}%</b>Attendance</div>
+      ${d?`<div class="stat"><b>${d.avgPct}%</b>Avg (all-time)</div>`:""}
+    </div>
+    <h2>Followup-wise Summary</h2>
+    <table><thead><tr><th>Followup Group</th><th>Present</th><th>Absent</th><th>%</th></tr></thead><tbody>${fpRows}</tbody></table>
+    <div class="two-col">
+      <div><h2>Present (${present.length})</h2>
+      <table><thead><tr><th>#</th><th>Name</th><th>Followup</th><th>Time</th></tr></thead><tbody>${pRow}</tbody></table></div>
+      <div><h2>Absent (${absent.length})</h2>
+      <table><thead><tr><th>#</th><th>Name</th><th>Followup</th><th>Note</th></tr></thead><tbody>${aRow}</tbody></table></div>
+    </div>
+    ${d?`<h2>Dashboard Snapshot</h2><div class="stats"><div class="stat"><b>${d.liveR}</b>Regular</div><div class="stat"><b>${d.liveI}</b>Irregular</div><div class="stat"><b>${d.liveN}</b>No Category</div><div class="stat"><b>${d.streak}</b>Session Streak</div></div>`:""}
+    <script>window.onload=()=>window.print();<\/script></body></html>`);
+    win.document.close();
+    setShowPrintModal(false);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  return(
+    <div ref={swipeRef} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+      style={{maxWidth:960,margin:"0 auto",padding:"16px 12px",minHeight:"100vh",
+        background:darkMode?"#0f172a":"transparent",color:darkMode?"#e2e8f0":"#1a1a1a",
+        transition:"background .2s,color .2s"}}>
+      {toast&&<div className="toast" style={{background:toast.type==="info"?"#1e40af":toast.type==="success"?"#15803d":"#991b1b"}}>{toast.msg}</div>}
+
+      {/* ══ PIN LOCK SCREEN ══ */}
+      {pin&&!pinUnlocked&&<div style={{position:"fixed",inset:0,background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999}}>
+        <div style={{background:"#1e293b",borderRadius:20,padding:40,textAlign:"center",width:320,boxShadow:"0 20px 60px rgba(0,0,0,.5)"}}>
+          <div style={{fontSize:40,marginBottom:8}}>🙏</div>
+          <div style={{fontWeight:700,fontSize:18,color:"#f1f5f9",marginBottom:4}}>|| Swami Shreeji ||</div>
+          <div style={{fontSize:12,color:"#94a3b8",marginBottom:28}}>Enter PIN to access</div>
+          <input type="password" maxLength={8} placeholder="Enter PIN"
+            value={pinInput} onChange={e=>setPinInput(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&tryUnlock()}
+            style={{width:"100%",padding:"12px 16px",borderRadius:10,border:"1px solid #334155",background:"#0f172a",color:"#f1f5f9",fontSize:18,textAlign:"center",letterSpacing:8,marginBottom:16}}
+            autoFocus/>
+          <button onClick={tryUnlock} style={{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"#15803d",color:"#fff",fontSize:15,fontWeight:600,cursor:"pointer"}}>Unlock</button>
+        </div>
+      </div>}
+
+      {/* Header */}
+      <div style={{marginBottom:16,display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+        <div>
+          <h1 style={{margin:"0 0 2px",fontSize:21,fontWeight:700}}>🙏 || Swami Shreeji || Attendance</h1>
+          <div style={{fontSize:12,color:"#888"}}>Session: &nbsp;
+            <input value={sessionDate} onChange={e=>!viewOnly&&setSessionDate(e.target.value)}
+              readOnly={viewOnly}
+              style={{border:"1px solid #ddd",borderRadius:6,padding:"2px 8px",fontSize:12,color:"#1a1a1a",width:150,marginRight:8}}/>
+            <select value={sabhaType} onChange={e=>{if(!viewOnly){setSabhaType(e.target.value);localStorage.setItem(LS_SABHA,e.target.value);}}}
+              disabled={viewOnly}
+              style={{border:"1px solid #ddd",borderRadius:6,padding:"2px 8px",fontSize:12,color:"#1a1a1a",background:"#fff"}}>
+              {["Weekly","Monthly","Special","Yuva Shibir","Festival"].map(t=><option key={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+          {/* User pill */}
+          <div style={{display:"flex",alignItems:"center",gap:7,background:isAdmin?"#dcfce7":"#f0f9ff",borderRadius:20,padding:"4px 12px 4px 6px",border:`1px solid ${isAdmin?"#bbf7d0":"#bae6fd"}`}}>
+            {authUser.photoURL&&<img src={authUser.photoURL} style={{width:24,height:24,borderRadius:"50%"}}/>}
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:isAdmin?"#15803d":"#0369a1",lineHeight:1.2}}>{isAdmin?"👑 Admin":"👁 Viewer"}</div>
+              <div style={{fontSize:10,color:"#888",lineHeight:1.2}}>{authUser.email}</div>
+            </div>
+          </div>
+          <button onClick={doSignOut} className="btn btn-gray" style={{fontSize:11,padding:"5px 10px"}}>Sign out</button>
+          {pin&&!viewOnly&&<button onClick={()=>{setPinUnlocked(false);setPinInput("");}} className="btn btn-gray" style={{fontSize:12}}>🔒 Lock</button>}
+          <button onClick={()=>setDarkMode(d=>!d)} className="btn btn-gray" style={{fontSize:13}} title="Toggle dark mode">{darkMode?"☀️":"🌙"}</button>
+          {!viewOnly&&<button onClick={()=>setShowPrintModal(true)} className="btn btn-blue" style={{fontSize:12}}>🖨 Print Report</button>}
+        </div>
+      </div>
+
+      {/* View-only banner */}
+      {viewOnly&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"10px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+        <span style={{fontSize:16}}>👁</span>
+        <div>
+          <span style={{fontWeight:600,fontSize:13,color:"#92400e"}}>View-only mode</span>
+          <span style={{fontSize:12,color:"#b45309",marginLeft:8}}>You can see all data but cannot make changes. Contact the admin to get write access.</span>
+        </div>
+      </div>}
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid #ddd",marginBottom:18,gap:0,overflowX:"auto"}}>
+        {[["dashboard","📈 Dashboard"],["panel","📋 Attendance"],["report","📊 Report"],["history","🕒 Historic"],["monthly","📅 Monthly"],["predict","🔮 Predict"],["action","⚡ Actions"],["yoy","📆 Compare"],["restructure","🔄 Followup"],["register","➕ New Yuvak"],["edit","✏️ Edit"],["settings","⚙️ Settings"]].map(([id,label])=>(
+          <button key={id} className={`tab-btn${tab===id?" active":""}`} onClick={()=>setTab(id)}>{label}</button>
+        ))}
+      </div>
+
+      {/* ═══════════════════ DASHBOARD TAB ═══════════════════ */}
+      {tab==="dashboard"&&<>
+        {!dashData&&<div className="card" style={{padding:48,textAlign:"center"}}>
+          <div style={{fontSize:36,marginBottom:12}}>📈</div>
+          <div style={{fontWeight:600,fontSize:16,color:"#555"}}>No data yet</div>
+          <div style={{fontSize:13,color:"#aaa",marginTop:6}}>Submit at least one session to see the dashboard.</div>
+        </div>}
+
+        {dashData&&<>
+          {/* ── KPI Cards ── */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10,marginBottom:20}}>
+            {[
+              {label:"Avg Attendance",value:dashData.avg,sub:`${dashData.avgPct}% of ${allMembers.length}`,color:"#1e40af",bg:"#eff6ff"},
+              {label:"Last Session",value:dashData.latest.totalPresent,sub:`${dashData.latest.pct}%  ${dashData.trend_dir>0?"▲ up":""}${dashData.trend_dir<0?"▼ down":""}${dashData.trend_dir===0?"-> same":""}`,color:dashData.trend_dir>=0?"#15803d":"#b91c1c",bg:dashData.trend_dir>=0?"#f0fdf4":"#fef2f2"},
+              {label:"Best Session",value:dashData.best.totalPresent,sub:dashData.best.date,color:"#15803d",bg:"#f0fdf4"},
+              {label:"Lowest Session",value:dashData.worst.totalPresent,sub:dashData.worst.date,color:"#b91c1c",bg:"#fef2f2"},
+              {label:"Regular Yuvaks",value:dashData.liveR,sub:`of ${allMembers.length} total`,color:"#15803d",bg:"#f0fdf4"},
+              {label:"Irregular",value:dashData.liveI,sub:"need attention",color:"#92400e",bg:"#fffbeb"},
+              {label:"No Category",value:dashData.liveN,sub:"not attending",color:"#b91c1c",bg:"#fef2f2"},
+              {label:">50% Streak",value:dashData.streak,sub:"consecutive sessions",color:"#7c3aed",bg:"#f5f3ff"},
+            ].map(k=>(
+              <div key={k.label} style={{background:k.bg,borderRadius:12,padding:"14px 16px",border:`1px solid ${k.color}22`}}>
+                <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>{k.label}</div>
+                <div style={{fontSize:26,fontWeight:700,color:k.color,lineHeight:1}}>{k.value}</div>
+                <div style={{fontSize:11,color:"#888",marginTop:4}}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Chart 1: Attendance Trend (line/bar) ── */}
+          <div className="card" style={{padding:20,marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:16}}>📊 Attendance Trend — Last {dashData.trend.length} Sessions</div>
+            {(()=>{
+              const data=dashData.trend;
+              const W=600,H=200,PL=40,PR=16,PT=16,PB=48;
+              const iW=W-PL-PR,iH=H-PT-PB;
+              const maxVal=Math.max(...data.map(d=>d.totalMembers),1);
+              const xStep=data.length>1?iW/(data.length-1):iW;
+              const yScale=v=>(iH-(v/maxVal*iH));
+              const pts=(key)=>data.map((d,i)=>`${PL+(data.length>1?i*xStep:iW/2)},${PT+yScale(d[key])}`).join(" ");
+              const area=(key)=>{
+                const first=`${PL+(data.length>1?0:iW/2)},${PT+iH}`;
+                const last=`${PL+(data.length>1?(data.length-1)*xStep:iW/2)},${PT+iH}`;
+                return `${first} ${pts(key)} ${last}`;
+              };
+              const yLines=[0,25,50,75,100].map(p=>Math.round(maxVal*p/100));
+              return(
+                <div style={{overflowX:"auto"}}>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",maxWidth:W,display:"block"}}>
+                  {/* Grid lines */}
+                  {yLines.map(v=>(
+                    <g key={v}>
+                      <line x1={PL} y1={PT+yScale(v)} x2={W-PR} y2={PT+yScale(v)} stroke="#f0f0f0" strokeWidth="1"/>
+                      <text x={PL-4} y={PT+yScale(v)+4} textAnchor="end" fontSize="9" fill="#bbb">{v}</text>
+                    </g>
+                  ))}
+                  {/* Area fills */}
+                  <polygon points={area("totalPresent")} fill="#dbeafe" opacity="0.6"/>
+                  <polygon points={area("regPresent")} fill="#dcfce7" opacity="0.7"/>
+                  <polygon points={area("regAbsent")} fill="#fee2e2" opacity="0.6"/>
+                  {/* Lines */}
+                  <polyline points={pts("totalPresent")} fill="none" stroke="#1e40af" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <polyline points={pts("regPresent")} fill="none" stroke="#15803d" strokeWidth="2" strokeLinejoin="round" strokeDasharray="0"/>
+                  <polyline points={pts("regAbsent")} fill="none" stroke="#dc2626" strokeWidth="2" strokeLinejoin="round" strokeDasharray="4 3"/>
+                  <polyline points={pts("irrPresent")} fill="none" stroke="#d97706" strokeWidth="1.5" strokeLinejoin="round" strokeDasharray="2 3"/>
+                  {/* Dots + labels */}
+                  {data.map((d,i)=>{
+                    const x=PL+(data.length>1?i*xStep:iW/2);
+                    const yP=PT+yScale(d.totalPresent);
+                    const yR=PT+yScale(d.regPresent);
+                    const yA=PT+yScale(d.regAbsent);
+                    const label=d.date.split(" ").slice(0,2).join(" ");
+                    return(
+                      <g key={i}>
+                        <circle cx={x} cy={yP} r="4" fill="#1e40af" stroke="#fff" strokeWidth="1.5"/>
+                        <circle cx={x} cy={yR} r="3.5" fill="#15803d" stroke="#fff" strokeWidth="1.5"/>
+                        <circle cx={x} cy={yA} r="3.5" fill="#dc2626" stroke="#fff" strokeWidth="1.5"/>
+                        <text x={x} y={H-4} textAnchor="middle" fontSize="9" fill="#999" transform={`rotate(-35,${x},${H-4})`}>{label}</text>
+                        <text x={x} y={yP-8} textAnchor="middle" fontSize="9" fill="#1e40af" fontWeight="600">{d.totalPresent}</text>
+                      </g>
+                    );
+                  })}
+                  {/* Legend */}
+                  {[["#1e40af","Total Present"],["#15803d","Regular Present"],["#dc2626","Regular Absent"],["#d97706","Irregular Present"]].map(([c,l],i)=>(
+                    <g key={l} transform={`translate(${PL+i*135},${H-10})`}>
+                      <line x1="0" y1="-3" x2="14" y2="-3" stroke={c} strokeWidth="2"/>
+                      <text x="17" y="0" fontSize="9" fill="#666">{l}</text>
+                    </g>
+                  ))}
+                </svg>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* ── Chart 2: Category Donut + Bar ── */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+            {/* Donut */}
+            <div className="card" style={{padding:20}}>
+              <div style={{fontWeight:600,fontSize:14,marginBottom:14}}>🍩 Category Distribution</div>
+              {(()=>{
+                const total=dashData.liveR+dashData.liveI+dashData.liveN||1;
+                const segs=[
+                  {label:"Regular",value:dashData.liveR,color:"#15803d"},
+                  {label:"Irregular",value:dashData.liveI,color:"#d97706"},
+                  {label:"No",value:dashData.liveN,color:"#dc2626"},
+                ];
+                const cx=80,cy=80,r=60,inner=36;
+                let angle=-Math.PI/2;
+                const arcs=segs.map(s=>{
+                  const sweep=s.value/total*Math.PI*2;
+                  const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+                  angle+=sweep;
+                  const x2=cx+r*Math.cos(angle),y2=cy+r*Math.sin(angle);
+                  const xi1=cx+inner*Math.cos(angle-sweep),yi1=cy+inner*Math.sin(angle-sweep);
+                  const xi2=cx+inner*Math.cos(angle),yi2=cy+inner*Math.sin(angle);
+                  const large=sweep>Math.PI?1:0;
+                  return{...s,d:`M${x1},${y1} A${r},${r},0,${large},1,${x2},${y2} L${xi2},${yi2} A${inner},${inner},0,${large},0,${xi1},${yi1} Z`,pct:Math.round(s.value/total*100)};
+                });
+                return(
+                  <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+                    <svg width="160" height="160" viewBox="0 0 160 160">
+                      {arcs.map(a=><path key={a.label} d={a.d} fill={a.color} opacity="0.9"/>)}
+                      <text x={cx} y={cy-6} textAnchor="middle" fontSize="18" fontWeight="700" fill="#1a1a1a">{allMembers.length}</text>
+                      <text x={cx} y={cy+12} textAnchor="middle" fontSize="9" fill="#888">Total</text>
+                    </svg>
+                    <div style={{flex:1}}>
+                      {arcs.map(a=>(
+                        <div key={a.label} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                          <div style={{width:12,height:12,borderRadius:3,background:a.color,flexShrink:0}}/>
+                          <div style={{flex:1,fontSize:13}}>{a.label}</div>
+                          <div style={{fontWeight:700,color:a.color,fontSize:14}}>{a.value}</div>
+                          <div style={{fontSize:11,color:"#aaa",width:32,textAlign:"right"}}>{a.pct}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Attendance % bar chart per session */}
+            <div className="card" style={{padding:20}}>
+              <div style={{fontWeight:600,fontSize:14,marginBottom:14}}>📶 Attendance % per Session</div>
+              {(()=>{
+                const data=dashData.trend;
+                const barW=Math.min(32, Math.floor(220/data.length)-4);
+                return(
+                  <svg viewBox={`0 0 260 160`} style={{width:"100%",display:"block"}}>
+                    {/* 50% and 75% lines */}
+                    {[50,75,100].map(p=>(
+                      <g key={p}>
+                        <line x1="30" y1={140-p*1.1} x2="260" y2={140-p*1.1} stroke="#f0f0f0" strokeWidth="1"/>
+                        <text x="26" y={143-p*1.1} textAnchor="end" fontSize="8" fill="#ccc">{p}%</text>
+                      </g>
+                    ))}
+                    {data.map((d,i)=>{
+                      const bh=d.pct*1.1;
+                      const x=34+i*(barW+4);
+                      const fill=d.pct>=75?"#15803d":d.pct>=50?"#d97706":"#dc2626";
+                      const label=d.date.split(" ")[0]+"\n"+d.date.split(" ")[1];
+                      return(
+                        <g key={i}>
+                          <rect x={x} y={140-bh} width={barW} height={bh} rx="3" fill={fill} opacity="0.85"/>
+                          <text x={x+barW/2} y={135-bh} textAnchor="middle" fontSize="8" fill={fill} fontWeight="600">{d.pct}%</text>
+                          <text x={x+barW/2} y={150} textAnchor="middle" fontSize="7.5" fill="#aaa">{d.date.split(" ")[0]}</text>
+                          <text x={x+barW/2} y={158} textAnchor="middle" fontSize="7.5" fill="#aaa">{d.date.split(" ")[1]}</text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* ── Chart 3: Followup Performance Bars ── */}
+          <div className="card" style={{padding:20,marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:4}}>🏆 Followup Group Performance <span style={{fontSize:11,color:"#888",fontWeight:400}}>(avg attendance % — last 6 sessions)</span></div>
+            <div style={{overflowX:"auto",marginTop:12}}>
+              {(()=>{
+                const data=dashData.fpPerf;
+                const maxAvg=Math.max(...data.map(d=>d.avg),1);
+                return(
+                  <div style={{minWidth:400}}>
+                    {data.map((fp,i)=>(
+                      <div key={fp.fp} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                        <div style={{width:130,fontSize:11,color:"#555",textAlign:"right",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}} title={fp.fp}>{fp.fp}</div>
+                        <div style={{flex:1,background:"#f3f4f6",borderRadius:6,height:20,overflow:"hidden",position:"relative"}}>
+                          <div style={{height:"100%",width:`${fp.avg}%`,borderRadius:6,background:fp.avg>=75?"#15803d":fp.avg>=50?"#d97706":"#dc2626",transition:"width .3s"}}/>
+                          <span style={{position:"absolute",right:6,top:2,fontSize:10,fontWeight:600,color:fp.avg>=75?"#15803d":fp.avg>=50?"#92400e":"#b91c1c"}}>{fp.avg}%</span>
+                        </div>
+                        <div style={{width:24,fontSize:11,color:"#aaa"}}>{fp.members}</div>
+                      </div>
+                    ))}
+                    <div style={{display:"flex",gap:16,marginTop:10,fontSize:11,color:"#888"}}>
+                      {[["#15803d",">=75% (Good)"],["#d97706","50-74% (Fair)"],["#dc2626","<50% (Needs attention)"]].map(([c,l])=>(
+                        <span key={l} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:10,borderRadius:2,background:c,display:"inline-block"}}/>{l}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* ── Chart 4: Stacked session composition ── */}
+          <div className="card" style={{padding:20,marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:14}}>📦 Session Composition — Regular vs Irregular vs No</div>
+            {(()=>{
+              const data=dashData.trend;
+              const W=600,H=180,PL=40,PR=16,PT=10,PB=50;
+              const iW=W-PL-PR,iH=H-PT-PB;
+              const bW=Math.min(36,Math.floor(iW/data.length)-6);
+              return(
+                <div style={{overflowX:"auto"}}>
+                <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",maxWidth:W,display:"block"}}>
+                  {[0,25,50,75,100].map(p=>(
+                    <g key={p}>
+                      <line x1={PL} y1={PT+iH*(1-p/100)} x2={W-PR} y2={PT+iH*(1-p/100)} stroke="#f3f4f6" strokeWidth="1"/>
+                      <text x={PL-4} y={PT+iH*(1-p/100)+4} textAnchor="end" fontSize="9" fill="#ccc">{p}</text>
+                    </g>
+                  ))}
+                  {data.map((d,i)=>{
+                    const tot=d.totalMembers||1;
+                    const rH=iH*(d.regPresent/tot);
+                    const iH2=iH*(d.irrPresent/tot);
+                    const nH=iH*(d.noPresent/tot);
+                    const x=PL+(iW/(data.length))*(i+0.5)-bW/2;
+                    const label=d.date.split(" ").slice(0,2).join(" ");
+                    let yOff=PT+iH;
+                    const bars=[{h:rH,c:"#15803d"},{h:iH2,c:"#d97706"},{h:nH,c:"#9ca3af"}];
+                    return(
+                      <g key={i}>
+                        {bars.map((b,bi)=>{
+                          yOff-=b.h;
+                          return <rect key={bi} x={x} y={yOff} width={bW} height={b.h} fill={b.c} opacity="0.85"/>;
+                        })}
+                        <text x={x+bW/2} y={H-PT-4} textAnchor="middle" fontSize="8.5" fill="#999" transform={`rotate(-35,${x+bW/2},${H-PT-4})`}>{label}</text>
+                      </g>
+                    );
+                  })}
+                  {/* Legend */}
+                  {[["#15803d","Regular"],["#d97706","Irregular"],["#9ca3af","No Category"]].map(([c,l],i)=>(
+                    <g key={l} transform={`translate(${PL+i*120},${H-8})`}>
+                      <rect x="0" y="-8" width="10" height="10" rx="2" fill={c}/>
+                      <text x="13" y="0" fontSize="9" fill="#666">{l}</text>
+                    </g>
+                  ))}
+                </svg>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* ── Insight cards ── */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12,marginBottom:4}}>
+            {dashData.liveR>0&&dashData.trend.length>0&&(()=>{
+              const lastRegAbsent=dashData.trend[dashData.trend.length-1].regAbsent;
+              return lastRegAbsent>0?(
+                <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:12,padding:16}}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#b91c1c",marginBottom:4}}>⚠ Regular Absent Alert</div>
+                  <div style={{fontSize:12,color:"#555"}}><b style={{color:"#b91c1c",fontSize:18}}>{lastRegAbsent}</b> regular yuvaks were absent in the last session.</div>
+                </div>
+              ):( <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:16}}>
+                  <div style={{fontWeight:600,fontSize:13,color:"#15803d",marginBottom:4}}>✅ Great Turnout!</div>
+                  <div style={{fontSize:12,color:"#555"}}>All regular yuvaks attended the last session. 🎉</div>
+                </div>
+              );
+            })()}
+            {dashData.streak>0&&<div style={{background:"#f5f3ff",border:"1px solid #ddd6fe",borderRadius:12,padding:16}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#7c3aed",marginBottom:4}}>🔥 Attendance Streak</div>
+              <div style={{fontSize:12,color:"#555"}}><b style={{color:"#7c3aed",fontSize:18}}>{dashData.streak}</b> consecutive session{dashData.streak!==1?"s":""} with over 50% attendance.</div>
+            </div>}
+            {dashData.fpPerf.length>0&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:12,padding:16}}>
+              <div style={{fontWeight:600,fontSize:13,color:"#92400e",marginBottom:4}}>📉 Needs Attention</div>
+              {dashData.fpPerf.filter(f=>f.avg<50).length===0
+                ?<div style={{fontSize:12,color:"#555"}}>All followup groups above 50% — great work!</div>
+                :<div style={{fontSize:12,color:"#555"}}><b>{dashData.fpPerf.filter(f=>f.avg<50).map(f=>f.fp).join(", ")}</b> below 50% avg attendance.</div>}
+            </div>}
+          </div>
+        </>}
+      </>}
+
+      {/* ═══════════════════ PANEL TAB ═══════════════════ */}
+      {tab==="panel"&&<>
+        {/* Stats */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(110px,1fr))",gap:8,marginBottom:14}}>
+          {[["Present",totalP,"#15803d"],["Absent",totalA,"#b91c1c"],["Unmarked",allMembers.length-totalMarked,"#888"],["Attendance",pct+"%",pct>=70?"#15803d":pct>=40?"#92400e":"#b91c1c"],["Total",allMembers.length,"#1a1a1a"]].map(([l,v,c])=>(
+            <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+          ))}
+        </div>
+
+        {/* Sub-tabs */}
+        <div style={{display:"flex",borderBottom:"2px solid #f0f0f0",marginBottom:14,gap:0}}>
+          <button onClick={()=>setPanelSubTab("all")}
+            style={{padding:"7px 18px",border:"none",borderBottom:`2px solid ${panelSubTab==="all"?"#1a1a1a":"transparent"}`,background:"transparent",fontWeight:panelSubTab==="all"?600:400,fontSize:13,cursor:"pointer",color:panelSubTab==="all"?"#1a1a1a":"#888",marginBottom:-2}}>
+            📋 All Members
+          </button>
+          <button onClick={()=>setPanelSubTab("regAbsent")}
+            style={{padding:"7px 18px",border:"none",borderBottom:`2px solid ${panelSubTab==="regAbsent"?"#dc2626":"transparent"}`,background:"transparent",fontWeight:panelSubTab==="regAbsent"?600:400,fontSize:13,cursor:"pointer",color:panelSubTab==="regAbsent"?"#dc2626":"#888",marginBottom:-2,display:"flex",alignItems:"center",gap:6}}>
+            🔴 Regular Absent
+            <span style={{background:"#dc2626",color:"#fff",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:700}}>{regularAbsent.length}</span>
+          </button>
+        </div>
+
+        {/* ── Sub-tab: ALL MEMBERS ── */}
+        {panelSubTab==="all"&&<>
+        <div style={{position:"relative",marginBottom:10}}>
+          <input
+            ref={qRef}
+            className="input-s"
+            placeholder="⚡ Quick mark Present — type name, use ↑↓ to select, Enter to mark"
+            value={qSearch}
+            onChange={e=>handleQSearch(e.target.value)}
+            onKeyDown={handleQKey}
+            style={{width:"100%",padding:"10px 14px",fontSize:14,borderRadius:10,border:"2px solid #15803d",background:"#f0fdf4"}}
+          />
+          {qResults.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:"#fff",border:"1px solid #d1fae5",borderRadius:10,boxShadow:"0 8px 30px rgba(0,0,0,.12)",zIndex:200,marginTop:2,overflow:"hidden"}}>
+            {qResults.map((m,i)=>{
+              const s=attendance[m.name]?.status;
+              return(
+                <div key={m.name}
+                  onClick={()=>confirmQMark(m.name)}
+                  style={{display:"flex",alignItems:"center",padding:"10px 14px",cursor:"pointer",background:i===qHighlight?"#f0fdf4":"#fff",borderBottom:"1px solid #f0f0f0",gap:10}}
+                  onMouseEnter={()=>setQHighlight(i)}>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:13}}>{m.name}</div>
+                    <div style={{fontSize:11,color:"#888"}}>{m.followup}{m.contact?` · ${m.contact}`:""}</div>
+                  </div>
+                  <span style={{fontSize:11,fontWeight:600,padding:"2px 8px",borderRadius:4,background:s==="P"?"#dcfce7":s==="A"?"#fee2e2":"#f3f4f6",color:s==="P"?"#15803d":s==="A"?"#b91c1c":"#6b7280"}}>
+                    {s==="P"?"✅ Present":s==="A"?"❌ Absent":"—"}
+                  </span>
+                  <span style={{fontSize:11,color:"#15803d",fontWeight:500}}>Enter ↵</span>
+                </div>
+              );
+            })}
+            <div style={{padding:"7px 14px",fontSize:11,color:"#aaa",background:"#fafafa"}}>↑↓ navigate · Enter to mark Present · Esc to close</div>
+          </div>}
+        </div>
+
+        {/* Toolbar row 1 – filter */}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+          <input className="input-s" placeholder="🔍 Filter list below..." value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:160}}/>
+          <select className="input-s" value={filterFP} onChange={e=>setFilterFP(e.target.value)} style={{width:"auto",flex:"none"}}>
+            {followups.map(f=><option key={f}>{f}</option>)}
+          </select>
+        </div>
+
+        {/* Toolbar row 2 – actions */}
+        <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>
+          {!viewOnly&&<button className="btn btn-green" onClick={()=>{filtered.forEach(m=>mark(m.name,"P"));toast_(`${filtered.length} marked present`);}}>✓ All P</button>}
+          {!viewOnly&&<button className="btn btn-red" onClick={()=>{filtered.forEach(m=>mark(m.name,"A"));toast_(`${filtered.length} marked absent`,"error");}}>✗ All A</button>}
+          <span style={{flex:1}}/>
+          {!viewOnly&&<button className="btn btn-purple" onClick={()=>setShowSubmit(true)}>✔ Submit Attendance</button>}
+          <button className="btn btn-green" onClick={genExcel}>⬇ Excel</button>
+          <button className="btn btn-wa" onClick={doWA}>💬 WhatsApp</button>
+          <button className="btn btn-wa" style={{background:"#128C7E"}} onClick={()=>setShowFPWAModal(true)}>💬 FP-Wise WA</button>
+          <button className="btn btn-blue" onClick={doPDF}>🖨 PDF</button>
+          {!viewOnly&&<button className="btn btn-red" onClick={()=>setShowReset(true)}>↺ Reset</button>}
+        </div>
+
+        {/* Member list */}
+        <div className="card" style={{overflow:"hidden"}}>
+
+        {/* ── Prev-session absent alert ── */}
+        {prevSessionAbsentNow.length>0&&(()=>{
+          const lastS=history.filter(s=>s.date!==sessionDate).slice(-1)[0];
+          return(
+            <div style={{borderBottom:"2px solid #fde68a",background:"#fffbeb"}}>
+              <div
+                onClick={()=>setShowPrevAbsent(v=>!v)}
+                style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 14px",cursor:"pointer",userSelect:"none"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontSize:15}}>⚠️</span>
+                  <div>
+                    <span style={{fontWeight:700,fontSize:12,color:"#92400e"}}>
+                      {prevSessionAbsentNow.length} yuvak{prevSessionAbsentNow.length>1?"s":""} present last session — absent today
+                    </span>
+                    {lastS&&<span style={{fontSize:10,color:"#b45309",marginLeft:6}}>({lastS.date})</span>}
+                  </div>
+                </div>
+                <span style={{fontSize:11,color:"#b45309",fontWeight:600}}>{showPrevAbsent?"▲ Hide":"▼ Show"}</span>
+              </div>
+              {showPrevAbsent&&<div style={{padding:"0 14px 10px",display:"flex",flexWrap:"wrap",gap:6}}>
+                {prevSessionAbsentNow.map(m=>{
+                  const cat=getCategory(m.name,history);
+                  return(
+                    <div key={m.name}
+                      style={{display:"inline-flex",alignItems:"center",gap:6,background:"#fff",border:"1px solid #fde68a",borderRadius:20,padding:"4px 10px 4px 7px",fontSize:12}}>
+                      <span className={`badge badge-${cat}`} style={{fontSize:10,padding:"1px 6px"}}>{cat}</span>
+                      <span style={{fontWeight:500,color:"#78350f"}}>{m.name.split(" ")[0]} {m.name.split(" ")[2]||m.name.split(" ")[1]}</span>
+                      <button
+                        onClick={()=>mark(m.name,"P")}
+                        title="Mark Present"
+                        style={{background:"#15803d",border:"none",color:"#fff",borderRadius:12,fontSize:10,fontWeight:700,cursor:"pointer",padding:"2px 7px",lineHeight:1.4}}>
+                        P ✓
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>}
+            </div>
+          );
+        })()}
+          <div style={{display:"flex",padding:"8px 12px",background:"#f4f4f0",fontSize:10,color:"#888",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",borderBottom:"1px solid #eee"}}>
+            <span style={{flex:1}}>Member</span>
+            <span style={{width:90,textAlign:"center"}}>Category</span>
+            <span style={{width:110,textAlign:"center"}}>Mark</span>
+            <span style={{width:50,textAlign:"right"}}>Time</span>
+          </div>
+          {filtered.length===0&&<div style={{padding:28,textAlign:"center",color:"#aaa"}}>No members found</div>}
+          {(()=>{
+            const presentList=filtered.filter(m=>attendance[m.name]?.status==="P");
+            const otherList=filtered.filter(m=>attendance[m.name]?.status!=="P");
+            return(<>
+              {presentList.map((m,idx)=>{
+                const a=attendance[m.name];
+                const s=a?.status;
+                const cat=getCategory(m.name,history);
+                return(
+                  <div key={m.name} className="row-hover" style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",borderBottom:"1px solid #d1fae5",background:"rgba(22,101,52,.06)"}}>
+                    <div style={{width:22,textAlign:"center",flexShrink:0,fontSize:11,fontWeight:700,color:"#15803d"}}>{idx+1}</div>
+                    <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                      <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",color:"#14532d"}}>{m.name}</div>
+                      <div style={{fontSize:10,color:"#16a34a",marginTop:1}}>{m.followup}{m.contact?` · ${m.contact}`:""}</div>
+                    </div>
+                    <div style={{width:90,textAlign:"center"}}>
+                      <span className={`badge badge-${cat}`}>{cat==="R"?"Regular":cat==="I"?"Irregular":"No"}</span>
+                      {catOverrides[m.name]&&<span title="Manual override" style={{fontSize:9,marginLeft:2,opacity:.7}}>✏️</span>}
+                    </div>
+                    <div style={{width:110,display:"flex",gap:5,justifyContent:"center"}}>
+                      <button onClick={()=>mark(m.name,null)}
+                        style={{padding:"5px 14px",borderRadius:6,border:"1.5px solid #15803d",background:"#dcfce7",color:"#15803d",fontWeight:700,fontSize:12,cursor:"pointer"}}>P ✓</button>
+                    </div>
+                    <div style={{width:50,textAlign:"right",fontSize:11,fontWeight:600,color:"#16a34a",fontVariantNumeric:"tabular-nums"}}>{a?.time||""}</div>
+                  </div>
+                );
+              })}
+              {presentList.length>0&&otherList.length>0&&(
+                <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 12px",background:"#f0fdf4",borderBottom:"2px solid #bbf7d0"}}>
+                  <div style={{fontSize:10,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:".08em"}}>
+                    ✅ {presentList.length} Present above · {otherList.length} remaining below
+                  </div>
+                </div>
+              )}
+              {otherList.map(m=>{
+                const a=attendance[m.name];
+                const s=a?.status;
+                const cat=getCategory(m.name,history);
+                return(
+                  <div key={m.name} className="row-hover" style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",borderBottom:"1px solid #f2f2f2",background:s==="A"?"rgba(153,27,27,.03)":"#fff"}}>
+                    <div style={{width:22,flexShrink:0}}/>
+                    <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                      <div style={{fontSize:13,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{m.name}</div>
+                      <div style={{fontSize:10,color:"#999",marginTop:1}}>{m.followup}{m.contact?` · ${m.contact}`:""}</div>
+                    </div>
+                    <div style={{width:90,textAlign:"center"}}>
+                      <span className={`badge badge-${cat}`}>{cat==="R"?"Regular":cat==="I"?"Irregular":"No"}</span>
+                      {catOverrides[m.name]&&<span title="Manual override" style={{fontSize:9,marginLeft:2,opacity:.7}}>✏️</span>}
+                    </div>
+                    <div style={{width:110,display:"flex",gap:5,justifyContent:"center"}}>
+                      <button onClick={()=>mark(m.name,"P")}
+                        style={{padding:"5px 14px",borderRadius:6,border:"1.5px solid #ddd",background:"transparent",color:"#bbb",fontWeight:700,fontSize:12,cursor:"pointer"}}>P</button>
+                      <button onClick={()=>mark(m.name,s==="A"?null:"A")}
+                        style={{padding:"5px 14px",borderRadius:6,border:`1.5px solid ${s==="A"?"#b91c1c":"#ddd"}`,background:s==="A"?"#fee2e2":"transparent",color:s==="A"?"#b91c1c":"#bbb",fontWeight:700,fontSize:12,cursor:"pointer"}}>A</button>
+                    </div>
+                    <div style={{width:50,textAlign:"right",fontSize:11,color:"#ddd",fontVariantNumeric:"tabular-nums"}}>{a?.time||""}</div>
+                  </div>
+                );
+              })}
+            </>);
+          })()}
+        </div>
+        </>}
+
+        {/* ── Sub-tab: REGULAR ABSENT ── */}
+        {panelSubTab==="regAbsent"&&<>
+          {regularAbsent.length===0
+            ?<div className="card" style={{padding:40,textAlign:"center"}}>
+                <div style={{fontSize:32,marginBottom:8}}>🎉</div>
+                <div style={{fontWeight:600,fontSize:15,color:"#15803d"}}>All Regular Yuvaks are Present!</div>
+                <div style={{fontSize:12,color:"#888",marginTop:4}}>No regular yuvak is absent right now.</div>
+              </div>
+            :<>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                <div style={{fontSize:13,color:"#b91c1c",fontWeight:600}}>
+                  {regularAbsent.length} Regular Yuvak{regularAbsent.length!==1?"s":""} absent right now
+                </div>
+                <button className="btn btn-green" style={{fontSize:12}}
+                  onClick={()=>{regularAbsent.forEach(m=>mark(m.name,"P"));toast_(`${regularAbsent.length} regular yuvaks marked present`);}}>
+                  ✓ Mark All Present
+                </button>
+              </div>
+              <div className="card" style={{overflow:"hidden"}}>
+                <div style={{display:"flex",padding:"8px 12px",background:"#fff5f5",fontSize:10,color:"#888",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",borderBottom:"1px solid #fee2e2"}}>
+                  <span style={{width:28,textAlign:"center"}}>#</span>
+                  <span style={{flex:1,marginLeft:8}}>Member</span>
+                  <span style={{width:110,textAlign:"center"}}>Action</span>
+                </div>
+                {regularAbsent.map((m,i)=>(
+                  <div key={m.name} className="row-hover" style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderBottom:"1px solid #fef2f2",background:"#fffafa"}}>
+                    <div style={{width:28,textAlign:"center",fontSize:12,color:"#aaa",flexShrink:0}}>{i+1}</div>
+                    <div style={{flex:1,minWidth:0,cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                      <div style={{fontSize:13,fontWeight:600,color:"#1a1a1a"}}>{m.name}</div>
+                      <div style={{fontSize:11,color:"#999",marginTop:1}}>{m.followup}{m.contact?` · ${m.contact}`:""}</div>
+                    </div>
+                    <div style={{flexShrink:0,display:"flex",gap:5}}>
+                      {m.contact&&<>
+                        <a href={`tel:${m.contact}`} style={{padding:"5px 10px",borderRadius:6,border:"1px solid #ddd",background:"#f0fdf4",color:"#15803d",fontSize:12,textDecoration:"none",display:"inline-flex",alignItems:"center",gap:3}}>📞</a>
+                        <button onClick={()=>doWAAbsent(m)} style={{padding:"5px 10px",borderRadius:6,border:"1px solid #ddd",background:"#f0fdf4",color:"#25D366",fontSize:12,cursor:"pointer"}}>💬</button>
+                      </>}
+                      <button onClick={()=>mark(m.name,"P")}
+                        style={{padding:"5px 14px",borderRadius:7,border:"1.5px solid #15803d",background:"#dcfce7",color:"#15803d",fontWeight:700,fontSize:12,cursor:"pointer"}}>
+                        ✓ Present
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          }
+        </>}
+      </>}
+      {tab==="report"&&<>
+        <div style={{fontSize:13,color:"#666",marginBottom:14}}>
+          Category is computed from historic data. <b>Regular</b> = attended at least 1 of last 4. <b>Irregular</b> = attended at least 1 of last 6 (not Regular). <b>No</b> = absent all last 6.
+        </div>
+
+        {/* ── Grand total summary cards – Present ── */}
+        <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#15803d"}}>✅ Present Summary</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:18}}>
+          {[["Regular Present",reportData.totRP,"#15803d"],["Irregular Present",reportData.totIP,"#92400e"],["No (Present)",reportData.totNP,"#b91c1c"],["Grand Present",reportData.grandP,"#1e40af"]].map(([l,v,c])=>(
+            <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+          ))}
+        </div>
+
+        {/* ── Grand total summary cards – Absent ── */}
+        <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:"#b91c1c"}}>❌ Absent Summary</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10,marginBottom:22}}>
+          {[["Regular Absent",reportData.totRA,"#15803d"],["Irregular Absent",reportData.totIA,"#92400e"],["No (Absent)",reportData.totNA,"#b91c1c"],["Grand Absent",reportData.grandA,"#64748b"]].map(([l,v,c])=>(
+            <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+          ))}
+        </div>
+
+        {/* ── Followup-wise detail table ── */}
+        <div className="card" style={{overflowX:"auto"}}>
+          <table style={{minWidth:700}}>
+            <thead>
+              <tr>
+                <th rowSpan={2} style={{verticalAlign:"middle",minWidth:150}}>Follow-up Group</th>
+                <th rowSpan={2} style={{width:55,verticalAlign:"middle",textAlign:"center"}}>Members</th>
+                <th colSpan={4} style={{textAlign:"center",background:"#14532d",borderLeft:"2px solid #16a34a"}}>✅ Present</th>
+                <th colSpan={4} style={{textAlign:"center",background:"#7f1d1d",borderLeft:"2px solid #dc2626"}}>❌ Absent</th>
+              </tr>
+              <tr>
+                <th style={{background:"#166534",borderLeft:"2px solid #16a34a",width:75,textAlign:"center",fontSize:11}}>🟢 Regular</th>
+                <th style={{background:"#78350f",width:75,textAlign:"center",fontSize:11}}>🟡 Irregular</th>
+                <th style={{background:"#7f1d1d",width:55,textAlign:"center",fontSize:11}}>🔴 No</th>
+                <th style={{background:"#1e3a5f",width:60,textAlign:"center",fontSize:11}}>Total</th>
+                <th style={{background:"#166534",borderLeft:"2px solid #dc2626",width:75,textAlign:"center",fontSize:11}}>🟢 Regular</th>
+                <th style={{background:"#78350f",width:75,textAlign:"center",fontSize:11}}>🟡 Irregular</th>
+                <th style={{background:"#7f1d1d",width:55,textAlign:"center",fontSize:11}}>🔴 No</th>
+                <th style={{background:"#374151",width:60,textAlign:"center",fontSize:11}}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reportData.rows.map(r=>(
+                <tr key={r.fp}>
+                  <td style={{fontWeight:500}}>{r.fp}</td>
+                  <td style={{textAlign:"center",color:"#666"}}>{r.members}</td>
+                  {/* Present */}
+                  <td style={{textAlign:"center",color:"#15803d",fontWeight:600,borderLeft:"2px solid #bbf7d0"}}>{r.RP}</td>
+                  <td style={{textAlign:"center",color:"#92400e",fontWeight:600}}>{r.IP}</td>
+                  <td style={{textAlign:"center",color:"#b91c1c",fontWeight:600}}>{r.NP}</td>
+                  <td style={{textAlign:"center",fontWeight:700,background:"#f0fdf4"}}>{r.totalP}</td>
+                  {/* Absent */}
+                  <td style={{textAlign:"center",color:"#15803d",fontWeight:600,borderLeft:"2px solid #fecaca"}}>{r.RA}</td>
+                  <td style={{textAlign:"center",color:"#92400e",fontWeight:600}}>{r.IA}</td>
+                  <td style={{textAlign:"center",color:"#b91c1c",fontWeight:600}}>{r.NA}</td>
+                  <td style={{textAlign:"center",fontWeight:700,background:"#fef2f2"}}>{r.totalA}</td>
+                </tr>
+              ))}
+              {/* Totals row */}
+              <tr style={{background:"#1e1e1e",color:"#fff"}}>
+                <td style={{fontWeight:700}}>TOTAL</td>
+                <td style={{textAlign:"center"}}>{allMembers.length}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#86efac",borderLeft:"2px solid #16a34a"}}>{reportData.totRP}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#fde68a"}}>{reportData.totIP}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#fca5a5"}}>{reportData.totNP}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#93c5fd"}}>{reportData.grandP}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#86efac",borderLeft:"2px solid #dc2626"}}>{reportData.totRA}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#fde68a"}}>{reportData.totIA}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#fca5a5"}}>{reportData.totNA}</td>
+                <td style={{textAlign:"center",fontWeight:700,color:"#d1d5db"}}>{reportData.grandA}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style={{marginTop:12,fontSize:12,color:"#aaa"}}>Submit attendance first to lock it into history and get accurate category counts.</div>
+      </>}
+
+      {/* ═══════════════════ HISTORIC DATA TAB ═══════════════════ */}
+      {tab==="history"&&<>
+        {/* Controls row */}
+        <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:12,alignItems:"flex-end"}}>
+          <div style={{flex:1,minWidth:180}}>
+            <label className="form-label" style={{marginBottom:4}}>Search</label>
+            <input className="input-s" placeholder="🔍 Name or followup..." value={histSearch} onChange={e=>setHistSearch(e.target.value)}/>
+          </div>
+          <div>
+            <label className="form-label" style={{marginBottom:4}}>From</label>
+            <input type="date" className="input-s" value={histFrom} onChange={e=>setHistFrom(e.target.value)} style={{width:150}}/>
+          </div>
+          <div>
+            <label className="form-label" style={{marginBottom:4}}>To</label>
+            <input type="date" className="input-s" value={histTo} onChange={e=>setHistTo(e.target.value)} style={{width:150}}/>
+          </div>
+          <button className="btn btn-gray" onClick={()=>{setHistFrom("");setHistTo("");}}>Clear Range</button>
+        </div>
+
+        {/* Info bar */}
+        <div style={{display:"flex",gap:16,flexWrap:"wrap",marginBottom:12,fontSize:12,color:"#888",alignItems:"center"}}>
+          <span>📅 Showing <b style={{color:"#1a1a1a"}}>{filteredDates.length}</b> of {prevHistory.length} session{prevHistory.length!==1?"s":""}</span>
+          {(histFrom||histTo)&&<span style={{background:"#eff6ff",color:"#1d4ed8",padding:"2px 10px",borderRadius:6,fontWeight:500}}>
+            {histFrom||"..."} -> {histTo||"..."}
+          </span>}
+          <span style={{marginLeft:"auto",color:"#b45309",fontSize:11}}>💡 Click any P/A cell to edit that session's attendance</span>
+        </div>
+
+        {prevHistory.length===0&&<div className="card" style={{padding:40,textAlign:"center",color:"#aaa"}}>No historic data yet. Submit attendance to start tracking history.</div>}
+        {prevHistory.length>0&&filteredDates.length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#aaa"}}>No sessions found in this date range.</div>}
+
+        {prevHistory.length>0&&filteredDates.length>0&&<div className="card" style={{overflowX:"auto"}}>
+          <table style={{minWidth:600}}>
+            <thead>
+              <tr>
+                <th style={{cursor:"pointer",minWidth:180,position:"sticky",left:0,zIndex:2,background:"#1e1e1e"}} onClick={()=>sortHist("name")}>Name {sortArrow("name")}</th>
+                <th style={{cursor:"pointer",minWidth:130,position:"sticky",left:180,zIndex:2,background:"#1e1e1e"}} onClick={()=>sortHist("followup")}>Followup {sortArrow("followup")}</th>
+                <th style={{cursor:"pointer",width:80,background:"#1e1e1e"}} onClick={()=>sortHist("cat")}>Category {sortArrow("cat")}</th>
+                <th style={{cursor:"pointer",width:65,background:"#1e1e1e"}} onClick={()=>sortHist("totalAtt")}>✅ Total {sortArrow("totalAtt")}</th>
+                {filteredDates.map(d=>(
+                  <th key={d} style={{width:80,fontWeight:400,fontSize:11,textAlign:"center",background:"#2d2d2d",whiteSpace:"nowrap"}}>{d}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {histRows.map(r=>(
+                <tr key={r.name}>
+                  <td style={{fontWeight:500,whiteSpace:"nowrap",position:"sticky",left:0,background:"#fff",zIndex:1,boxShadow:"2px 0 4px rgba(0,0,0,.04)"}}>{r.name}</td>
+                  <td style={{color:"#555",fontSize:12,position:"sticky",left:180,background:"#fff",zIndex:1,boxShadow:"2px 0 4px rgba(0,0,0,.04)"}}>{r.followup}</td>
+                  <td style={{textAlign:"center"}}><span className={`badge badge-${r.cat}`}>{r.cat==="R"?"Regular":r.cat==="I"?"Irregular":"No"}</span></td>
+                  <td style={{textAlign:"center",fontWeight:600,color:"#15803d"}}>
+                    {filteredDates.filter(d=>r.byDate[d]==="P").length}
+                  </td>
+                  {filteredDates.map(d=>{
+                    const s=r.byDate[d];
+                    const isEditing=histEditCell&&histEditCell.name===r.name&&histEditCell.date===d;
+                    return(
+                      <td key={d} style={{textAlign:"center",padding:"6px 4px"}}>
+                        {isEditing?(
+                          <div style={{display:"flex",gap:3,justifyContent:"center"}}>
+                            <button onClick={()=>doHistEdit(r.name,d,"P")}
+                              style={{padding:"3px 8px",borderRadius:5,border:"1.5px solid #15803d",background:"#dcfce7",color:"#15803d",fontWeight:700,fontSize:11,cursor:"pointer"}}>P</button>
+                            <button onClick={()=>doHistEdit(r.name,d,"A")}
+                              style={{padding:"3px 8px",borderRadius:5,border:"1.5px solid #b91c1c",background:"#fee2e2",color:"#b91c1c",fontWeight:700,fontSize:11,cursor:"pointer"}}>A</button>
+                            <button onClick={()=>setHistEditCell(null)}
+                              style={{padding:"3px 6px",borderRadius:5,border:"1px solid #ddd",background:"#f3f4f6",color:"#888",fontSize:11,cursor:"pointer"}}>✕</button>
+                          </div>
+                        ):(
+                          <span
+                            onClick={()=>setHistEditCell({name:r.name,date:d})}
+                            title="Click to edit"
+                            style={{display:"inline-block",minWidth:28,padding:"3px 7px",borderRadius:5,cursor:"pointer",fontWeight:700,fontSize:12,
+                              background:s==="P"?"#dcfce7":s==="A"?"#fee2e2":"#f3f4f6",
+                              color:s==="P"?"#15803d":s==="A"?"#b91c1c":"#aaa",
+                              border:"1px solid transparent",transition:"border .1s"}}
+                            onMouseEnter={e=>e.currentTarget.style.border="1px solid #94a3b8"}
+                            onMouseLeave={e=>e.currentTarget.style.border="1px solid transparent"}
+                          >
+                            {s==="P"?"P":s==="A"?"A":"—"}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              {[
+                {label:"Total Present",cat:null,color:"#86efac",bg:"#14532d"},
+                {label:"Regular ✅",cat:"R",color:"#bbf7d0",bg:"#166534"},
+                {label:"Irregular ✅",cat:"I",color:"#fde68a",bg:"#78350f"},
+                {label:"No ✅",cat:"N",color:"#fca5a5",bg:"#7f1d1d"},
+              ].map(({label,cat,color,bg})=>(
+                <tr key={label} style={{background:bg,color:"#fff"}}>
+                  <td style={{fontWeight:600,fontSize:11,whiteSpace:"nowrap",position:"sticky",left:0,background:bg,zIndex:1,padding:"7px 10px"}}>{label}</td>
+                  <td style={{position:"sticky",left:180,background:bg,zIndex:1}}></td>
+                  <td></td>
+                  <td style={{textAlign:"center",fontWeight:700,color}}>
+                    {cat===null
+                      ? filteredDates.reduce((s,d)=>{const sess=prevHistory.find(x=>x.date===d);return s+(sess?sess.records.filter(r=>r.status==="P").length:0);},0)
+                      : filteredDates.reduce((s,d)=>{const sess=prevHistory.find(x=>x.date===d);return s+(sess?sess.records.filter(r=>r.status==="P"&&calcCategory(r.name,prevHistory)===cat).length:0);},0)
+                    }
+                  </td>
+                  {filteredDates.map(d=>{
+                    const sess=prevHistory.find(x=>x.date===d);
+                    const count=sess
+                      ? cat===null
+                        ? sess.records.filter(r=>r.status==="P").length
+                        : sess.records.filter(r=>r.status==="P"&&calcCategory(r.name,prevHistory)===cat).length
+                      : 0;
+                    return<td key={d} style={{textAlign:"center",fontWeight:700,color,fontSize:13}}>{count||"—"}</td>;
+                  })}
+                </tr>
+              ))}
+            </tfoot>
+          </table>
+        </div>}
+        <div style={{marginTop:10,fontSize:11,color:"#bbb"}}>✅ Total shows present count within selected date range only.</div>
+      </>}
+
+      {/* ═══════════════════ FOLLOWUP RESTRUCTURING TAB ═══════════════════ */}
+      {tab==="restructure"&&<>
+        <div style={{marginBottom:18}}>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 16px"}}>Reassign yuvaks between followup groups or create new groups. Changes are saved immediately and reflected across all tabs.</p>
+
+          {/* Move a member */}
+          <div className="card" style={{padding:18,marginBottom:16}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>🔀 Move Yuvak to Different Group</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:10,alignItems:"end"}}>
+              <div>
+                <label className="form-label">Select Yuvak</label>
+                <select className="form-input" value={fpMoveName} onChange={e=>setFPMoveName(e.target.value)}>
+                  <option value="">— Choose yuvak —</option>
+                  {allMembers.sort((a,b)=>a.name.localeCompare(b.name)).map(m=>(
+                    <option key={m.name} value={m.name}>{m.name} ({m.followup})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Move to Group</label>
+                <select className="form-input" value={fpMoveTarget} onChange={e=>setFPMoveTarget(e.target.value)}>
+                  <option value="">— Choose group —</option>
+                  {allFollowups.map(fp=><option key={fp}>{fp}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-teal" style={{height:38}} onClick={doMoveMember}>Move ✓</button>
+            </div>
+          </div>
+
+          {/* Create new group */}
+          <div className="card" style={{padding:18,marginBottom:20}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:12}}>➕ Create New Followup Group</div>
+            <div style={{display:"flex",gap:10,alignItems:"end"}}>
+              <div style={{flex:1}}>
+                <label className="form-label">New Group Name</label>
+                <input className="form-input" placeholder="e.g. Rahul Patel" value={fpNewName} onChange={e=>setFPNewName(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&doCreateFPGroup()}/>
+              </div>
+              <button className="btn btn-green" style={{height:38}} onClick={doCreateFPGroup}>Create</button>
+            </div>
+          </div>
+
+          {/* Groups overview */}
+          <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>📋 All Followup Groups</div>
+          {allFollowups.map(fp=>{
+            const members=allMembers.filter(m=>m.followup===fp);
+            const isOpen=fpExpanded[fp];
+            return(
+              <div key={fp} className="fp-group-card">
+                <div className="fp-group-header" onClick={()=>setFPExpanded(prev=>({...prev,[fp]:!isOpen}))}>
+                  <span style={{fontWeight:600,fontSize:13}}>{fp}</span>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    <span style={{fontSize:12,color:"#888"}}>{members.length} member{members.length!==1?"s":""}</span>
+                    <span style={{fontSize:12,color:"#aaa"}}>{isOpen?"▲":"▼"}</span>
+                  </div>
+                </div>
+                {isOpen&&<div style={{padding:"12px 16px"}}>
+                  {members.length===0&&<div style={{color:"#bbb",fontSize:13,fontStyle:"italic"}}>No members in this group yet.</div>}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                    {members.map(m=>(
+                      <div key={m.name} className="fp-member-chip">
+                        {m.name}
+                        {fpOverrides[m.name]&&<span style={{fontSize:9,color:"#16a34a",marginLeft:2}}>★</span>}
+                        {m.isExtra&&<span style={{fontSize:9,color:"#7c3aed",marginLeft:2}}>new</span>}
+                        <button title="Remove from this group" onClick={()=>{
+                          const orig=MASTER.find(x=>x.name===m.name)?.followup||extraMembers.find(x=>x.name===m.name)?.followup;
+                          if(orig===fp){toast_("Cannot remove from original group — reassign to another group instead","error");return;}
+                          const newOv={...fpOverrides};delete newOv[m.name];setFPOverrides(newOv);saveFPOverrides(newOv);
+                          toast_(`${m.name} reverted to original group`,"info");
+                        }} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:13,padding:0,lineHeight:1}}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>}
+              </div>
+            );
+          })}
+          <div style={{fontSize:11,color:"#aaa",marginTop:8}}>★ = reassigned from original group &nbsp;|&nbsp; <span style={{color:"#7c3aed"}}>new</span> = registered yuvak</div>
+        </div>
+      </>}
+
+      {/* ═══════════════════ NEW YUVAK REGISTRATION TAB ═══════════════════ */}
+      {tab==="register"&&<>
+        {/* Registration form */}
+        <div className="card" style={{padding:22,marginBottom:20}}>
+          <div style={{fontWeight:700,fontSize:15,marginBottom:16}}>📝 Register New Yuvak</div>
+          <div className="form-grid" style={{marginBottom:12}}>
+            <div>
+              <label className="form-label">Full Name *</label>
+              <input className="form-input" placeholder="e.g. Rahul Suresh Patel" value={regForm.fullName}
+                onChange={e=>setRegForm(f=>({...f,fullName:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Date of Birth</label>
+              <input className="form-input" type="date" value={regForm.dob}
+                onChange={e=>setRegForm(f=>({...f,dob:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Contact Number</label>
+              <input className="form-input" placeholder="10-digit mobile" maxLength={10} value={regForm.contact}
+                onChange={e=>setRegForm(f=>({...f,contact:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Reference (brought by)</label>
+              <input className="form-input" placeholder="e.g. Yash Kaila" value={regForm.reference}
+                onChange={e=>setRegForm(f=>({...f,reference:e.target.value}))}/>
+            </div>
+            <div style={{gridColumn:"1/-1"}}>
+              <label className="form-label">Address</label>
+              <input className="form-input" placeholder="Area / locality" value={regForm.address}
+                onChange={e=>setRegForm(f=>({...f,address:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Followup Group *</label>
+              <select className="form-input" value={regForm.followup} onChange={e=>setRegForm(f=>({...f,followup:e.target.value}))}>
+                <option value="">— Select group —</option>
+                {allFollowups.map(fp=><option key={fp}>{fp}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setRegForm({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""})}>Clear</button>
+            <button className="btn btn-purple" onClick={doRegister}>Register Yuvak ✓</button>
+          </div>
+        </div>
+
+        {/* Registered yuvaks list */}
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
+          <div style={{fontWeight:600,fontSize:14}}>📂 Registered Yuvaks ({extraMembers.length})</div>
+          <input className="input-s" placeholder="🔍 Search..." value={regSearch} onChange={e=>setRegSearch(e.target.value)} style={{width:220}}/>
+        </div>
+        {extraMembers.length===0&&<div className="card" style={{padding:36,textAlign:"center",color:"#bbb"}}>No new yuvaks registered yet.</div>}
+        {extraMembers.length>0&&<div className="card" style={{overflowX:"auto"}}>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>Contact</th>
+                <th>Reference</th>
+                <th>Address</th>
+                <th>Followup</th>
+                <th>Registered</th>
+                <th style={{width:60}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {extraMembers.filter(m=>m.name.toLowerCase().includes(regSearch.toLowerCase())||m.followup.toLowerCase().includes(regSearch.toLowerCase())).map((m,i)=>(
+                <tr key={m.name}>
+                  <td style={{color:"#aaa",textAlign:"center"}}>{i+1}</td>
+                  <td style={{fontWeight:500}}>{m.name}</td>
+                  <td style={{fontSize:12}}>{m.dob||"—"}</td>
+                  <td style={{fontSize:12}}>{m.contact||"—"}</td>
+                  <td style={{fontSize:12}}>{m.reference||"—"}</td>
+                  <td style={{fontSize:12,maxWidth:140,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{m.address||"—"}</td>
+                  <td><span style={{background:"#ede9fe",color:"#5b21b6",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>{fpOverrides[m.name]||m.followup}</span></td>
+                  <td style={{fontSize:11,color:"#888"}}>{m.registeredOn}</td>
+                  <td style={{textAlign:"center"}}>
+                    <button className="btn btn-red" style={{padding:"4px 10px",fontSize:11}} onClick={()=>setRegDeleteConfirm(m.name)}>Remove</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>}
+      </>}
+
+      {/* ═══════════════════ EDIT / DELETE TAB ═══════════════════ */}
+      {tab==="edit"&&<>
+        {/* Search + filter */}
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:14}}>
+          <input className="input-s" placeholder="🔍 Search by name or followup..." value={editSearch}
+            onChange={e=>setEditSearch(e.target.value)} style={{flex:1,minWidth:180}}/>
+          <select className="form-input" value={editFilter} onChange={e=>setEditFilter(e.target.value)} style={{width:"auto",flex:"none"}}>
+            {["All","MASTER members","Registered yuvaks",...allFollowups].map(f=><option key={f}>{f}</option>)}
+          </select>
+        </div>
+
+        <div style={{fontSize:12,color:"#888",marginBottom:10}}>
+          {allMembers.length} total yuvaks &nbsp;·&nbsp; Click <b>Edit</b> to modify details &nbsp;·&nbsp; <span style={{color:"#7c3aed"}}>Category dropdown overrides auto-calculation</span> &nbsp;·&nbsp; <span style={{color:"#dc2626"}}>Delete permanently removes from all records</span>
+        </div>
+
+        <div className="card" style={{overflowX:"auto"}}>
+          <table style={{minWidth:720}}>
+            <thead>
+              <tr>
+                <th style={{width:32}}>#</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Followup</th>
+                <th style={{width:55}}>Type</th>
+                <th style={{width:150,textAlign:"center"}}>Category</th>
+                <th style={{width:120,textAlign:"center"}}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allMembers
+                .filter(m=>{
+                  const q=editSearch.toLowerCase();
+                  const matchQ=m.name.toLowerCase().includes(q)||(fpOverrides[m.name]||m.followup).toLowerCase().includes(q);
+                  const matchF=editFilter==="All"
+                    ||(editFilter==="MASTER members"&&!m.isExtra)
+                    ||(editFilter==="Registered yuvaks"&&m.isExtra)
+                    ||(editFilter===(fpOverrides[m.name]||m.followup));
+                  return matchQ&&matchF;
+                })
+                .map((m,i)=>{
+                  const fp=fpOverrides[m.name]||m.followup;
+                  const contact=m.isExtra?m.contact:getExtra(m.name,"contact")||m.contact;
+                  const effCat=getCategory(m.name,history);
+                  const isManual=!!catOverrides[m.name];
+                  return(
+                    <tr key={m.name}>
+                      <td style={{color:"#aaa",textAlign:"center",fontSize:12}}>{i+1}</td>
+                      <td>
+                        <div style={{fontWeight:500,fontSize:13}}>{m.name}</div>
+                        {m.isExtra&&m.dob&&<div style={{fontSize:11,color:"#888"}}>DOB: {m.dob}</div>}
+                        {(m.isExtra?m.address:getExtra(m.name,"address"))&&
+                          <div style={{fontSize:11,color:"#aaa",maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                            {m.isExtra?m.address:getExtra(m.name,"address")}
+                          </div>}
+                      </td>
+                      <td style={{fontSize:12,color:"#555"}}>{contact||<span style={{color:"#ddd"}}>—</span>}</td>
+                      <td>
+                        <span style={{background:m.isExtra?"#ede9fe":"#f0fdf4",color:m.isExtra?"#5b21b6":"#166534",borderRadius:5,padding:"2px 8px",fontSize:11,fontWeight:600}}>
+                          {fp}
+                        </span>
+                        {fpOverrides[m.name]&&<span style={{fontSize:10,color:"#aaa",marginLeft:4}}>↺ reassigned</span>}
+                      </td>
+                      <td style={{textAlign:"center"}}>
+                        <span style={{fontSize:10,fontWeight:600,background:m.isExtra?"#f5f3ff":"#f0f9ff",color:m.isExtra?"#7c3aed":"#0369a1",padding:"2px 7px",borderRadius:4}}>
+                          {m.isExtra?"New":"Master"}
+                        </span>
+                      </td>
+                      <td style={{textAlign:"center"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:5,justifyContent:"center"}}>
+                          <select
+                            value={isManual?effCat:"auto"}
+                            onChange={e=>doSetCatOverride(m.name,e.target.value)}
+                            style={{padding:"4px 6px",borderRadius:6,border:`1.5px solid ${isManual?"#7c3aed":"#ddd"}`,fontSize:12,fontWeight:600,cursor:"pointer",background:isManual?"#faf5ff":"#fff",color:isManual?"#7c3aed":effCat==="R"?"#15803d":effCat==="I"?"#92400e":"#b91c1c",outline:"none",width:100}}>
+                            <option value="auto">Auto</option>
+                            <option value="R">Regular</option>
+                            <option value="I">Irregular</option>
+                            <option value="N">No</option>
+                          </select>
+                          {!isManual&&<span className={`badge badge-${effCat}`} style={{fontSize:10}}>{effCat==="R"?"R":effCat==="I"?"I":"N"}</span>}
+                          {isManual&&<span title="Manually overridden" style={{fontSize:13,cursor:"default"}}>✏️</span>}
+                        </div>
+                      </td>
+                      <td style={{textAlign:"center"}}>
+                        <div style={{display:"flex",gap:6,justifyContent:"center"}}>
+                          <button className="btn btn-blue" style={{padding:"4px 12px",fontSize:12}} onClick={()=>openEdit(m)}>✏ Edit</button>
+                          <button className="btn btn-red" style={{padding:"4px 10px",fontSize:12}} onClick={()=>setEditDeleteConfirm(m)}>🗑</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      </>}
+
+      {/* ══ Edit Yuvak modal ══ */}
+      {editTarget&&editForm&&<div className="modal-bg" onClick={()=>{setEditTarget(null);setEditForm(null);}}>
+        <div style={{background:"#fff",borderRadius:14,padding:26,maxWidth:520,width:"94%",boxShadow:"0 10px 50px rgba(0,0,0,.2)",maxHeight:"90vh",overflowY:"auto"}}
+          onClick={e=>e.stopPropagation()}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:18}}>
+            <h2 style={{margin:0,fontSize:17}}>✏️ Edit Yuvak</h2>
+            <span style={{fontSize:11,background:editTarget.isExtra?"#ede9fe":"#f0fdf4",color:editTarget.isExtra?"#7c3aed":"#166534",padding:"3px 9px",borderRadius:5,fontWeight:600}}>
+              {editTarget.isExtra?"Registered":"Master DB"}
+            </span>
+          </div>
+          <div className="form-grid" style={{marginBottom:14}}>
+            <div style={{gridColumn:"1/-1"}}>
+              <label className="form-label">Full Name *</label>
+              <input className="form-input" value={editForm.fullName} onChange={e=>setEditForm(f=>({...f,fullName:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Contact Number</label>
+              <input className="form-input" placeholder="10-digit mobile" value={editForm.contact} onChange={e=>setEditForm(f=>({...f,contact:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="form-label">Followup Group *</label>
+              <select className="form-input" value={editForm.followup} onChange={e=>setEditForm(f=>({...f,followup:e.target.value}))}>
+                {allFollowups.map(fp=><option key={fp}>{fp}</option>)}
+              </select>
+            </div>
+            {editTarget.isExtra&&<>
+              <div>
+                <label className="form-label">Date of Birth</label>
+                <input className="form-input" type="date" value={editForm.dob} onChange={e=>setEditForm(f=>({...f,dob:e.target.value}))}/>
+              </div>
+              <div>
+                <label className="form-label">Reference</label>
+                <input className="form-input" value={editForm.reference} onChange={e=>setEditForm(f=>({...f,reference:e.target.value}))}/>
+              </div>
+            </>}
+            <div style={{gridColumn:"1/-1"}}>
+              <label className="form-label">Address</label>
+              <input className="form-input" value={editForm.address} onChange={e=>setEditForm(f=>({...f,address:e.target.value}))}/>
+            </div>
+          </div>
+          {!editTarget.isExtra&&<div style={{fontSize:11,color:"#f59e0b",background:"#fffbeb",border:"1px solid #fde68a",borderRadius:7,padding:"8px 12px",marginBottom:14}}>
+            ⚠ This is a Master DB member. Only contact, address, and followup can be changed. Name edits are also saved.
+          </div>}
+          <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center",marginTop:4}}>
+            <button className="btn btn-red" style={{padding:"7px 14px"}} onClick={()=>setEditDeleteConfirm(editTarget)}>🗑 Delete Yuvak</button>
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn btn-gray" onClick={()=>{setEditTarget(null);setEditForm(null);}}>Cancel</button>
+              <button className="btn btn-green" onClick={doSaveEdit}>Save Changes ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {/* ══ Edit delete confirm modal ══ */}
+      {editDeleteConfirm&&<div className="modal-bg" onClick={()=>setEditDeleteConfirm(null)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <h2 style={{margin:"0 0 8px",fontSize:17}}>Delete Yuvak?</h2>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 6px"}}><b>{editDeleteConfirm.name}</b> will be permanently deleted.</p>
+          {!editDeleteConfirm.isExtra&&<p style={{fontSize:12,color:"#dc2626",background:"#fef2f2",borderRadius:7,padding:"8px 12px",margin:"0 0 16px"}}>
+            ⚠ This is a Master DB member. Deleting removes them from attendance and future sessions, but does not erase their past historic records.
+          </p>}
+          {editDeleteConfirm.isExtra&&<p style={{fontSize:12,color:"#555",margin:"0 0 16px"}}>This cannot be undone. Their attendance history will remain in the historic records.</p>}
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setEditDeleteConfirm(null)}>Cancel</button>
+            <button className="btn btn-red" onClick={()=>doDeleteEdit(editDeleteConfirm.name,editDeleteConfirm.isExtra)}>Yes, Delete</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* ══ Followup-wise WhatsApp Modal ══ */}
+      {showFPWAModal&&<div className="modal-bg" onClick={()=>setShowFPWAModal(false)}>
+        <div style={{background:darkMode?"#1e293b":"#fff",borderRadius:16,maxWidth:520,width:"94%",maxHeight:"88vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.25)",padding:0}}
+          onClick={e=>e.stopPropagation()}>
+          {/* Header */}
+          <div style={{background:"#128C7E",borderRadius:"16px 16px 0 0",padding:"18px 22px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:16}}>💬 Followup-wise WhatsApp</div>
+              <div style={{fontSize:12,opacity:.85,marginTop:2}}>Send per-group reports or one consolidated message</div>
+            </div>
+            <button onClick={()=>setShowFPWAModal(false)} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,color:"#fff",fontSize:18,cursor:"pointer",padding:"4px 10px",lineHeight:1}}>✕</button>
+          </div>
+
+          {/* Consolidated send banner */}
+          <div style={{background:"#f0fdf4",padding:"12px 22px",borderBottom:"1px solid #d1fae5",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,flexWrap:"wrap"}}>
+            <div>
+              <div style={{fontWeight:600,fontSize:13,color:"#166534"}}>📤 Consolidated Report</div>
+              <div style={{fontSize:11,color:"#4ade80",marginTop:1}}>All {allFollowups.length} groups · summary format · {totalP}P / {totalA}A / {pct}%</div>
+            </div>
+            <button onClick={doWAConsolidated}
+              style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 18px",borderRadius:9,border:"none",background:"#25D366",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer",whiteSpace:"nowrap"}}>
+              💬 Send Consolidated
+            </button>
+          </div>
+
+          {/* Info banner */}
+          <div style={{background:"#fffbeb",padding:"8px 22px",fontSize:11,color:"#92400e",borderBottom:"1px solid #fde68a"}}>
+            📋 Per-group format below: Regular / Irregular / No · Present + Absent breakdown
+          </div>
+
+          {/* Followup group list */}
+          <div style={{padding:"12px 16px"}}>
+            {allFollowups.map(fp=>{
+              const members=allMembers.filter(m=>m.followup===fp);
+              const present=members.filter(m=>attendance[m.name]?.status==="P");
+              const absent=members.filter(m=>attendance[m.name]?.status!=="P");
+              const pct2=members.length>0?Math.round(present.length/members.length*100):0;
+              const pColor=pct2>=75?"#15803d":pct2>=50?"#92400e":"#b91c1c";
+
+              // Find coordinator's contact — look for a MASTER member whose name matches the followup label
+              const coordinatorMember=allMembers.find(m=>
+                m.name.toLowerCase().includes(fp.toLowerCase().split(" ")[0].toLowerCase())&&
+                (m.contact||"").length>=10
+              );
+              const coordContact=coordinatorMember?.contact||"";
+
+              return(
+                <div key={fp} style={{border:"1px solid #e5e7eb",borderRadius:12,marginBottom:10,overflow:"hidden"}}>
+                  {/* Group header */}
+                  <div style={{padding:"12px 16px",background:darkMode?"#0f172a":"#f9f9f7",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <div style={{fontWeight:600,fontSize:13}}>{fp}</div>
+                      <div style={{fontSize:11,color:"#888",marginTop:1}}>
+                        {members.length} members · {present.length}P / {absent.length}A ·
+                        <span style={{color:pColor,fontWeight:600}}> {pct2}%</span>
+                      </div>
+                      {coordContact&&<div style={{fontSize:10,color:"#16a34a",marginTop:1}}>📞 {coordContact}</div>}
+                    </div>
+                    {/* Action buttons */}
+                    <div style={{display:"flex",gap:6}}>
+                      {coordContact&&(
+                        <button
+                          onClick={()=>{doWAFollowup(fp,coordContact);}}
+                          style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 14px",borderRadius:8,border:"none",background:"#25D366",color:"#fff",fontWeight:600,fontSize:12,cursor:"pointer"}}>
+                          💬 Send to {fp.split(" ")[0]}
+                        </button>
+                      )}
+                      <button
+                        onClick={()=>doWAFollowup(fp,null)}
+                        style={{display:"inline-flex",alignItems:"center",gap:5,padding:"7px 12px",borderRadius:8,border:"1px solid #25D366",background:"transparent",color:"#25D366",fontWeight:600,fontSize:12,cursor:"pointer"}}
+                        title="Share without opening specific contact">
+                        🔗 Generic
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  <div style={{padding:"10px 16px",display:"flex",gap:12,flexWrap:"wrap",fontSize:12}}>
+                    {["R","I","N"].map(cat=>{
+                      const pC=present.filter(m=>getCategory(m.name,history)===cat);
+                      const aC=absent.filter(m=>getCategory(m.name,history)===cat);
+                      const catN=cat==="R"?"Regular":cat==="I"?"Irregular":"No";
+                      const catCol=cat==="R"?"#15803d":cat==="I"?"#92400e":"#b91c1c";
+                      return(
+                        <div key={cat} style={{flex:1,minWidth:80}}>
+                          <div style={{fontWeight:600,color:catCol,fontSize:11,marginBottom:4}}>{catN}</div>
+                          <div style={{fontSize:11,color:"#16a34a"}}>✅ {pC.length} present</div>
+                          <div style={{fontSize:11,color:"#b91c1c"}}>❌ {aC.length} absent</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{padding:"12px 22px",borderTop:"1px solid #f0f0f0",fontSize:11,color:"#aaa"}}>
+            "Send to [Name]" opens that coordinator's WhatsApp chat directly · "Generic" opens WhatsApp share without a specific contact
+          </div>
+        </div>
+      </div>}
+
+      {/* ══ Submit modal ══ */}
+      {showSubmit&&<div className="modal-bg" onClick={()=>setShowSubmit(false)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <h2 style={{margin:"0 0 8px",fontSize:17}}>Submit Attendance</h2>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 10px"}}>Session: <b>{sessionDate}</b> · <b>{sabhaType}</b></p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+            <div className="stat-card"><div className="stat-label">Present</div><div className="stat-num" style={{color:"#15803d"}}>{totalP}</div></div>
+            <div className="stat-card"><div className="stat-label">Absent</div><div className="stat-num" style={{color:"#b91c1c"}}>{totalA}</div></div>
+            <div className="stat-card"><div className="stat-label">Unmarked</div><div className="stat-num" style={{color:"#888"}}>{allMembers.length-totalMarked}</div></div>
+          </div>
+          <div style={{marginBottom:16}}>
+            <label className="form-label">Session Note (optional)</label>
+            <input className="form-input" placeholder="e.g. Janmashtami special, heavy rain..." value={sessionNote} onChange={e=>setSessionNote(e.target.value)}/>
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setShowSubmit(false)}>Cancel</button>
+            <button className="btn btn-green" onClick={()=>{doSubmit();setTimeout(genExcel,400);}}>Submit + Excel</button>
+            <button className="btn btn-purple" onClick={doSubmit}>Submit Only</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* ══ Reset modal ══ */}
+      {showReset&&<div className="modal-bg" onClick={()=>setShowReset(false)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <h2 style={{margin:"0 0 8px",fontSize:17}}>Reset Attendance?</h2>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 18px"}}>All Present / Absent marks will be cleared for the next session. Make sure you have submitted or exported first.</p>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setShowReset(false)}>Cancel</button>
+            <button className="btn btn-red" onClick={doReset}>Yes, Reset</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* ══ Delete confirm modal (registered yuvaks tab) ══ */}
+      {regDeleteConfirm&&<div className="modal-bg" onClick={()=>setRegDeleteConfirm(null)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <h2 style={{margin:"0 0 8px",fontSize:17}}>Remove Yuvak?</h2>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 18px"}}><b>{regDeleteConfirm}</b> will be removed from the database. This cannot be undone.</p>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setRegDeleteConfirm(null)}>Cancel</button>
+            <button className="btn btn-red" onClick={()=>doDeleteReg(regDeleteConfirm)}>Yes, Remove</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* ═══════════════════ MONTHLY SUMMARY TAB ═══════════════════ */}
+      {tab==="monthly"&&<>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
+          <select className="input-s" value={monthlyFP} onChange={e=>setMonthlyFP(e.target.value)} style={{width:"auto"}}>
+            <option>All</option>
+            {allFollowups.map(f=><option key={f}>{f}</option>)}
+          </select>
+          <button className="btn btn-green" onClick={genHistExcel}>⬇ Export Full Excel</button>
+          <span style={{fontSize:12,color:"#888",marginLeft:"auto"}}>{monthlySummary.length} month{monthlySummary.length!==1?"s":""} on record</span>
+        </div>
+
+        {monthlySummary.length===0&&<div className="card" style={{padding:40,textAlign:"center",color:"#aaa"}}>No sessions submitted yet. Submit attendance to see monthly summaries.</div>}
+
+        {monthlySummary.map(mon=>{
+          const filtMembers=monthlyFP==="All"?allMembers:allMembers.filter(m=>m.followup===monthlyFP);
+          const fpSessions=mon.sessions;
+          const fpPresent=fpSessions.map(s=>s.records.filter(r=>filtMembers.some(m=>m.name===r.name)&&r.status==="P").length);
+          const fpAvg=fpSessions.length>0?Math.round(fpPresent.reduce((a,b)=>a+b,0)/fpSessions.length):0;
+          const fpMax=fpPresent.length?Math.max(...fpPresent):0;
+          const fpMin=fpPresent.length?Math.min(...fpPresent):0;
+          const fpBestDate=fpSessions[fpPresent.indexOf(fpMax)]?.date||"";
+          const fpWorstDate=fpSessions[fpPresent.indexOf(fpMin)]?.date||"";
+          return(
+            <div key={mon.key} className="card" style={{marginBottom:14,overflow:"hidden"}}>
+              <div style={{background:"#1e1e1e",color:"#fff",padding:"12px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                <div style={{fontWeight:700,fontSize:16}}>{mon.key}</div>
+                <div style={{fontSize:12,color:"#94a3b8"}}>{fpSessions.length} session{fpSessions.length!==1?"s":""}</div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:0,borderBottom:"1px solid #f0f0f0"}}>
+                {[["Avg Present",fpAvg,"#15803d"],["Best Session",fpMax,"#1e40af"],["Worst Session",fpMin,"#b91c1c"],["Avg %",filtMembers.length>0?Math.round(fpAvg/filtMembers.length*100)+"%":"—","#92400e"]].map(([l,v,c])=>(
+                  <div key={l} style={{padding:"14px 18px",borderRight:"1px solid #f0f0f0"}}>
+                    <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:".06em",marginBottom:4}}>{l}</div>
+                    <div style={{fontSize:22,fontWeight:700,color:c}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{padding:"10px 18px",display:"flex",gap:16,flexWrap:"wrap",fontSize:12,color:"#555"}}>
+                <span>🏆 Best: <b>{fpBestDate}</b> ({fpMax} present)</span>
+                <span>📉 Lowest: <b>{fpWorstDate}</b> ({fpMin} present)</span>
+              </div>
+              {/* Session breakdown */}
+              <div style={{padding:"0 18px 14px"}}>
+                <div style={{fontSize:11,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Session breakdown</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {fpSessions.map((s,i)=>{
+                    const cnt=s.records.filter(r=>filtMembers.some(m=>m.name===r.name)&&r.status==="P").length;
+                    const pct2=filtMembers.length>0?Math.round(cnt/filtMembers.length*100):0;
+                    const bg=pct2>=75?"#dcfce7":pct2>=50?"#fef9c3":"#fee2e2";
+                    const col=pct2>=75?"#15803d":pct2>=50?"#92400e":"#b91c1c";
+                    return(
+                      <div key={s.date} style={{background:bg,borderRadius:8,padding:"6px 10px",fontSize:11,textAlign:"center",minWidth:80}}>
+                        <div style={{fontWeight:600,color:col}}>{cnt} / {filtMembers.length}</div>
+                        <div style={{color:"#888",marginTop:1}}>{s.date}</div>
+                        {s.sabhaType&&s.sabhaType!=="Weekly"&&<div style={{fontSize:9,color:"#7c3aed",marginTop:1}}>{s.sabhaType}</div>}
+                        {s.note&&<div style={{fontSize:9,color:"#555",marginTop:1,maxWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}} title={s.note}>📝 {s.note}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Top 5 for this month */}
+              <div style={{padding:"0 18px 16px"}}>
+                <div style={{fontSize:11,color:"#888",fontWeight:600,textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>🏅 Top attenders this month</div>
+                <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                  {filtMembers.map(m=>({
+                    name:m.name,
+                    cnt:fpSessions.filter(s=>s.records.find(r=>r.name===m.name&&r.status==="P")).length
+                  })).sort((a,b)=>b.cnt-a.cnt).slice(0,5).map((m,i)=>(
+                    <div key={m.name} style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:8,padding:"5px 10px",fontSize:12,cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                      <span style={{color:"#888",fontSize:10}}>{i+1}. </span><b>{m.name.split(" ")[0]}</b>
+                      <span style={{color:"#15803d",marginLeft:4,fontWeight:600}}>{m.cnt}/{fpSessions.length}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </>}
+
+      {/* ═══════════════════ PREDICT TAB ═══════════════════ */}
+      {tab==="predict"&&<>
+        <div style={{fontSize:13,color:darkMode?"#94a3b8":"#666",marginBottom:16}}>
+          Based on last 6 sessions, yuvaks whose attendance is <b>dropping</b> are flagged as at-risk. Higher risk score = more urgent attention needed.
+        </div>
+        {predictionList.length===0&&<div className="card" style={{padding:40,textAlign:"center",color:"#aaa"}}>
+          <div style={{fontSize:32,marginBottom:8}}>✅</div>
+          <div style={{fontWeight:600}}>No at-risk yuvaks detected</div>
+          <div style={{fontSize:12,marginTop:4}}>Need at least 2 sessions of data to calculate trends.</div>
+        </div>}
+        {predictionList.length>0&&<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:14}}>
+            {[["At-Risk Yuvaks",predictionList.length,"#b91c1c"],["High Risk (5+)",predictionList.filter(m=>m.riskScore>=5).length,"#7c2d12"],["Regular At-Risk",predictionList.filter(m=>m.cat==="R").length,"#92400e"]].map(([l,v,c])=>(
+              <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+            ))}
+          </div>
+          <div className="card" style={{overflow:"hidden"}}>
+            <div style={{display:"flex",padding:"8px 14px",background:darkMode?"#1e293b":"#f9f9f7",fontSize:10,color:"#888",fontWeight:700,textTransform:"uppercase",letterSpacing:".07em",borderBottom:"1px solid #f0f0f0"}}>
+              <span style={{flex:1}}>Member</span>
+              <span style={{width:70,textAlign:"center"}}>Category</span>
+              <span style={{width:80,textAlign:"center"}}>Prev 3 sess</span>
+              <span style={{width:80,textAlign:"center"}}>Last 3 sess</span>
+              <span style={{width:65,textAlign:"center"}}>Risk</span>
+            </div>
+            {predictionList.map(m=>(
+              <div key={m.name} className="row-hover" style={{display:"flex",alignItems:"center",padding:"10px 14px",borderBottom:"1px solid #f5f5f5",cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:500,fontSize:13}}>{m.name}</div>
+                  <div style={{fontSize:11,color:"#888"}}>{m.followup}</div>
+                </div>
+                <div style={{width:70,textAlign:"center"}}><span className={`badge badge-${m.cat}`}>{m.cat==="R"?"Regular":m.cat==="I"?"Irregular":"No"}</span></div>
+                <div style={{width:80,textAlign:"center",fontWeight:600,color:"#15803d"}}>{m.prev3}/3</div>
+                <div style={{width:80,textAlign:"center",fontWeight:600,color:"#dc2626"}}>{m.last3}/3</div>
+                <div style={{width:65,textAlign:"center"}}>
+                  <span style={{background:m.riskScore>=5?"#fef2f2":"#fffbeb",color:m.riskScore>=5?"#b91c1c":"#92400e",padding:"2px 8px",borderRadius:6,fontSize:11,fontWeight:700}}>{m.riskScore>=5?"🔴 High":"🟡 Med"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginTop:10,fontSize:11,color:"#aaa"}}>Click any row to view full profile. Risk score is based on attendance drop over last 6 sessions.</div>
+        </>}
+      </>}
+
+      {/* ═══════════════════ ACTION TAB ═══════════════════ */}
+      {tab==="action"&&<>
+        <div style={{fontSize:13,color:darkMode?"#94a3b8":"#666",marginBottom:16}}>
+          Yuvaks who dropped category or missed 3+ consecutive sessions. Assign personal follow-up calls immediately.
+        </div>
+        {actionList.length===0&&<div className="card" style={{padding:40,textAlign:"center",color:"#aaa"}}>
+          <div style={{fontSize:32,marginBottom:8}}>🎉</div>
+          <div style={{fontWeight:600}}>No action required right now</div>
+          <div style={{fontSize:12,marginTop:4}}>No yuvaks have dropped category or have 3+ consecutive absences.</div>
+        </div>}
+        {actionList.length>0&&<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:14}}>
+            {[["Total Actions",actionList.length,"#dc2626"],["Category Drops",actionList.filter(m=>m.action==="Category Drop").length,"#7c2d12"],["3+ Absent",actionList.filter(m=>m.action==="3+ Consecutive Absent").length,"#92400e"]].map(([l,v,c])=>(
+              <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+            ))}
+          </div>
+          {["Category Drop","3+ Consecutive Absent"].map(actionType=>{
+            const items=actionList.filter(m=>m.action===actionType);
+            if(!items.length) return null;
+            return(
+              <div key={actionType} style={{marginBottom:16}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:8,color:actionType==="Category Drop"?"#7c2d12":"#92400e"}}>
+                  {actionType==="Category Drop"?"📉 Category Drops":"⏰ 3+ Consecutive Absences"} ({items.length})
+                </div>
+                <div className="card" style={{overflow:"hidden"}}>
+                  {items.map(m=>{
+                    const mem=allMembers.find(x=>x.name===m.name);
+                    return(
+                      <div key={m.name} className="row-hover" style={{display:"flex",alignItems:"center",gap:10,padding:"11px 14px",borderBottom:"1px solid #f5f5f5"}}>
+                        <div style={{flex:1,cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                          <div style={{fontWeight:500,fontSize:13}}>{m.name}</div>
+                          <div style={{fontSize:11,color:"#888",marginTop:1}}>{m.followup}
+                            {m.action==="Category Drop"&&<span style={{marginLeft:8,color:"#b91c1c",fontSize:10}}>
+                              {m.catPrev==="R"?"Regular":m.catPrev==="I"?"Irregular":"No"} -> {m.catNow==="R"?"Regular":m.catNow==="I"?"Irregular":"No"}
+                            </span>}
+                            {m.action==="3+ Consecutive Absent"&&<span style={{marginLeft:8,color:"#b91c1c",fontSize:10}}>{m.consAbsent} consecutive absences</span>}
+                          </div>
+                        </div>
+                        {mem?.contact&&<div style={{display:"flex",gap:6,flexShrink:0}}>
+                          <a href={`tel:${mem.contact}`} className="btn btn-green" style={{textDecoration:"none",padding:"5px 10px",fontSize:12}}>📞</a>
+                          <button className="btn btn-wa" style={{padding:"5px 10px",fontSize:12}} onClick={()=>doWAAbsent(mem)}>💬</button>
+                        </div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </>}
+      </>}
+
+      {/* ═══════════════════ YEAR-OVER-YEAR / COMPARE TAB ═══════════════════ */}
+      {tab==="yoy"&&<>
+        <div style={{fontSize:13,color:darkMode?"#94a3b8":"#666",marginBottom:16}}>Compare attendance between any two custom date ranges — e.g. this month vs last month, or this year vs last year.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:20}}>
+          {/* Range 1 */}
+          <div className="card" style={{padding:18,borderLeft:"4px solid #1e40af"}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#1e40af",marginBottom:10}}>Range A</div>
+            <div style={{display:"flex",gap:8,flexDirection:"column"}}>
+              <div><label className="form-label">From</label><input type="date" className="form-input" value={yoyRange1From} onChange={e=>setYoyRange1From(e.target.value)}/></div>
+              <div><label className="form-label">To</label><input type="date" className="form-input" value={yoyRange1To} onChange={e=>setYoyRange1To(e.target.value)}/></div>
+            </div>
+          </div>
+          {/* Range 2 */}
+          <div className="card" style={{padding:18,borderLeft:"4px solid #15803d"}}>
+            <div style={{fontWeight:600,fontSize:13,color:"#15803d",marginBottom:10}}>Range B</div>
+            <div style={{display:"flex",gap:8,flexDirection:"column"}}>
+              <div><label className="form-label">From</label><input type="date" className="form-input" value={yoyRange2From} onChange={e=>setYoyRange2From(e.target.value)}/></div>
+              <div><label className="form-label">To</label><input type="date" className="form-input" value={yoyRange2To} onChange={e=>setYoyRange2To(e.target.value)}/></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Comparison cards */}
+        {(yoyRange1From||yoyRange1To||yoyRange2From||yoyRange2To)&&<>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:10,marginBottom:16}}>
+            {[
+              {label:"Sessions",a:yoyData.r1.sessions,b:yoyData.r2.sessions},
+              {label:"Avg Present",a:yoyData.r1.avgPresent,b:yoyData.r2.avgPresent},
+              {label:"Avg %",a:yoyData.r1.avgPct+"%",b:yoyData.r2.avgPct+"%"},
+            ].map(({label,a,b})=>{
+              const aNum=parseInt(a),bNum=parseInt(b);
+              const aWins=!isNaN(aNum)&&!isNaN(bNum)&&aNum>bNum;
+              const bWins=!isNaN(aNum)&&!isNaN(bNum)&&bNum>aNum;
+              return(
+                <div key={label} className="card" style={{padding:16,textAlign:"center"}}>
+                  <div style={{fontSize:10,color:"#888",textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>{label}</div>
+                  <div style={{display:"flex",justifyContent:"space-around",alignItems:"center",gap:8}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11,color:"#1e40af",fontWeight:600,marginBottom:2}}>Range A</div>
+                      <div style={{fontSize:22,fontWeight:700,color:aWins?"#15803d":bWins?"#b91c1c":"#1e40af"}}>{a}{aWins?" 🏆":""}</div>
+                    </div>
+                    <div style={{fontSize:16,color:"#ddd"}}>vs</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:11,color:"#15803d",fontWeight:600,marginBottom:2}}>Range B</div>
+                      <div style={{fontSize:22,fontWeight:700,color:bWins?"#15803d":aWins?"#b91c1c":"#15803d"}}>{b}{bWins?" 🏆":""}</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Side-by-side bar charts */}
+          {(yoyData.raw1.length>0||yoyData.raw2.length>0)&&<div className="card" style={{padding:20}}>
+            <div style={{fontWeight:600,fontSize:13,marginBottom:14}}>Session-by-session comparison</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+              {[{label:"Range A",sessions:yoyData.raw1,color:"#1e40af"},{label:"Range B",sessions:yoyData.raw2,color:"#15803d"}].map(({label,sessions,color})=>(
+                <div key={label}>
+                  <div style={{fontSize:11,fontWeight:600,color,marginBottom:8}}>{label} ({sessions.length} sessions)</div>
+                  {sessions.length===0&&<div style={{fontSize:12,color:"#aaa"}}>No sessions in this range.</div>}
+                  {sessions.map((s,i)=>{
+                    const cnt=s.records.filter(r=>r.status==="P").length;
+                    const pct2=allMembers.length?Math.round(cnt/allMembers.length*100):0;
+                    return(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                        <div style={{width:80,fontSize:10,color:"#888",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{s.date.split(" ").slice(0,2).join(" ")}</div>
+                        <div style={{flex:1,background:"#f3f4f6",borderRadius:4,height:16,overflow:"hidden"}}>
+                          <div style={{height:"100%",width:`${pct2}%`,background:color,borderRadius:4,opacity:0.85}}/>
+                        </div>
+                        <div style={{width:36,fontSize:11,fontWeight:600,color,textAlign:"right"}}>{pct2}%</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>}
+        </>}
+        {(!yoyRange1From&&!yoyRange1To&&!yoyRange2From&&!yoyRange2To)&&
+          <div className="card" style={{padding:36,textAlign:"center",color:"#aaa"}}>Select date ranges above to compare.</div>}
+      </>}
+
+      {/* ══ Print modal ══ */}
+      {showPrintModal&&<div className="modal-bg" onClick={()=>setShowPrintModal(false)}>
+        <div className="modal" onClick={e=>e.stopPropagation()}>
+          <h2 style={{margin:"0 0 10px",fontSize:17}}>🖨 Print / Save Report</h2>
+          <p style={{fontSize:13,color:"#666",margin:"0 0 16px"}}>Generates a print-ready A4 report with: today's attendance, followup summary, present/absent lists, and dashboard snapshot.</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:18}}>
+            <div className="stat-card"><div className="stat-label">Present</div><div className="stat-num" style={{color:"#15803d"}}>{totalP}</div></div>
+            <div className="stat-card"><div className="stat-label">Absent</div><div className="stat-num" style={{color:"#b91c1c"}}>{totalA}</div></div>
+            <div className="stat-card"><div className="stat-label">Sabha</div><div style={{fontSize:13,fontWeight:600,marginTop:4}}>{sabhaType}</div></div>
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button className="btn btn-gray" onClick={()=>setShowPrintModal(false)}>Cancel</button>
+            <button className="btn btn-blue" onClick={doPrintReport}>Open Print View</button>
+          </div>
+        </div>
+      </div>}
+
+      {/* ═══════════════════ SETTINGS TAB ═══════════════════ */}
+      {tab==="settings"&&<>
+        <div style={{display:"flex",gap:0,borderBottom:"1px solid #eee",marginBottom:20}}>
+          {[["general","⚙️ General"],["pin","🔒 PIN Lock"],["backup","💾 Backup"]].map(([id,label])=>(
+            <button key={id} onClick={()=>setSettingsTab(id)}
+              style={{padding:"8px 18px",border:"none",borderBottom:`2px solid ${settingsTab===id?"#1a1a1a":"transparent"}`,background:"transparent",fontSize:13,fontWeight:settingsTab===id?600:400,cursor:"pointer",color:settingsTab===id?"#1a1a1a":"#888",marginBottom:-1}}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {settingsTab==="general"&&<>
+          <div className="card" style={{padding:20,marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:14}}>Appearance</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontWeight:500,fontSize:13}}>Dark Mode</div>
+                <div style={{fontSize:12,color:"#888"}}>Easy on the eyes for night-time use</div>
+              </div>
+              <button onClick={()=>setDarkMode(d=>!d)}
+                style={{padding:"8px 18px",borderRadius:20,border:"none",background:darkMode?"#15803d":"#e5e7eb",color:darkMode?"#fff":"#374151",fontWeight:600,fontSize:13,cursor:"pointer",transition:"all .2s"}}>
+                {darkMode?"🌙 Dark ON":"☀️ Light"}
+              </button>
+            </div>
+          </div>
+          <div className="card" style={{padding:20,marginBottom:14}}>
+            <div style={{fontSize:13,color:"#555",marginBottom:10}}>Current session type:
+              <select value={sabhaType} onChange={e=>{setSabhaType(e.target.value);localStorage.setItem(LS_SABHA,e.target.value);}}
+                style={{marginLeft:8,padding:"4px 10px",borderRadius:7,border:"1px solid #ddd",fontSize:13}}>
+                {["Weekly","Monthly","Special","Yuva Shibir","Festival"].map(t=><option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="card" style={{padding:20,marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>Database Stats</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10}}>
+              {[["Total Yuvaks",allMembers.length,"#1a1a1a"],["Master DB",MASTER.length,"#1e40af"],["Registered",extraMembers.length,"#7c3aed"],["Sessions Recorded",prevHistory.length,"#15803d"]].map(([l,v,c])=>(
+                <div key={l} className="stat-card"><div className="stat-label">{l}</div><div className="stat-num" style={{color:c}}>{v}</div></div>
+              ))}
+            </div>
+          </div>
+          <div className="card" style={{padding:20}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:10}}>Top 10 Most Regular Yuvaks</div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{fontSize:13}}>
+                <thead><tr><th style={{width:32}}>#</th><th>Name</th><th>Followup</th><th style={{width:70}}>Category</th><th style={{width:70}}>Sessions ✅</th></tr></thead>
+                <tbody>{topYuvaks.map((m,i)=>(
+                  <tr key={m.name} style={{cursor:"pointer"}} onClick={()=>setProfileMember(m.name)}>
+                    <td style={{textAlign:"center",color:"#f59e0b",fontWeight:700}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</td>
+                    <td style={{fontWeight:500}}>{m.name}</td>
+                    <td style={{fontSize:12,color:"#555"}}>{m.followup}</td>
+                    <td style={{textAlign:"center"}}><span className={`badge badge-${m.cat}`}>{m.cat==="R"?"Regular":m.cat==="I"?"Irregular":"No"}</span></td>
+                    <td style={{textAlign:"center",fontWeight:600,color:"#15803d"}}>{m.totalP}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </div>
+        </>}
+
+        {settingsTab==="pin"&&<>
+          <div className="card" style={{padding:24,marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>🔒 PIN Lock</div>
+            <div style={{fontSize:13,color:"#666",marginBottom:16}}>{pin?"PIN is set. The app will ask for PIN on every open.":"No PIN set. Anyone can open the app freely."}</div>
+            {pin&&<div style={{display:"flex",gap:10,marginBottom:16}}>
+              <button className="btn btn-red" onClick={doRemovePin}>Remove PIN</button>
+              <button className="btn btn-gray" onClick={()=>setShowPinSetup(true)}>Change PIN</button>
+            </div>}
+            {!pin&&<button className="btn btn-blue" onClick={()=>setShowPinSetup(true)}>Set PIN</button>}
+            {showPinSetup&&<div style={{marginTop:16,borderTop:"1px solid #eee",paddingTop:16}}>
+              <div className="form-grid">
+                <div>
+                  <label className="form-label">New PIN (min 4 digits)</label>
+                  <input type="password" className="form-input" placeholder="Enter new PIN" maxLength={8} value={pinSetupVal} onChange={e=>setPinSetupVal(e.target.value)}/>
+                </div>
+                <div>
+                  <label className="form-label">Confirm PIN</label>
+                  <input type="password" className="form-input" placeholder="Re-enter PIN" maxLength={8} value={pinSetupConfirm} onChange={e=>setPinSetupConfirm(e.target.value)}/>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8,marginTop:12}}>
+                <button className="btn btn-gray" onClick={()=>{setShowPinSetup(false);setPinSetupVal("");setPinSetupConfirm("");}}>Cancel</button>
+                <button className="btn btn-green" onClick={doSetPin}>Save PIN</button>
+              </div>
+            </div>}
+          </div>
+        </>}
+
+        {settingsTab==="backup"&&<>
+          <div className="card" style={{padding:24,marginBottom:14}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>💾 Export Backup</div>
+            <div style={{fontSize:13,color:"#666",marginBottom:16}}>Download all your data (attendance, history, members, settings) as a JSON file. Store it safely — you can restore it anytime.</div>
+            <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+              <button className="btn btn-blue" onClick={doBackup}>⬇ Download Backup JSON</button>
+              <button className="btn btn-green" onClick={genHistExcel}>⬇ Export Full Historic Excel</button>
+            </div>
+          </div>
+          <div className="card" style={{padding:24}}>
+            <div style={{fontWeight:600,fontSize:14,marginBottom:6}}>📂 Restore from Backup</div>
+            <div style={{fontSize:13,color:"#dc2626",background:"#fef2f2",borderRadius:8,padding:"10px 14px",marginBottom:14}}>⚠ Restoring will overwrite your current data. Make a backup first if needed.</div>
+            <label style={{display:"inline-flex",alignItems:"center",gap:8,padding:"9px 16px",background:"#f4f4f0",borderRadius:8,cursor:"pointer",fontWeight:500,fontSize:13,border:"1px solid #ddd"}}>
+              📁 Choose Backup File
+              <input type="file" accept=".json" onChange={doRestore} style={{display:"none"}}/>
+            </label>
+          </div>
+        </>}
+      </>}
+
+      {/* ══ Profile Drawer ══ */}
+      {profileMember&&(()=>{
+        const pd=getProfileData(profileMember);
+        if(!pd) return null;
+        const {m,cat,totalP:tp,totalS:ts,pct:pc,recentP,recentS,recentPct,sessions}=pd;
+        return(
+          <div className="modal-bg" onClick={()=>setProfileMember(null)}>
+            <div style={{background:"#fff",borderRadius:16,maxWidth:540,width:"94%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.2)"}}
+              onClick={e=>e.stopPropagation()}>
+              {/* Header */}
+              <div style={{background:"#1e1e1e",borderRadius:"16px 16px 0 0",padding:"20px 22px",color:"#fff"}}>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between"}}>
+                  <div>
+                    <div style={{fontSize:18,fontWeight:700}}>{m.name}</div>
+                    <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>{m.followup}</div>
+                    {m.contact&&<div style={{fontSize:12,color:"#94a3b8"}}>📞 {m.contact}</div>}
+                    {m.isExtra&&m.dob&&<div style={{fontSize:12,color:"#94a3b8"}}>🎂 {m.dob}</div>}
+                    {(m.isExtra?m.address:getExtra(m.name,"address"))&&<div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>📍 {m.isExtra?m.address:getExtra(m.name,"address")}</div>}
+                    {m.isExtra&&m.reference&&<div style={{fontSize:12,color:"#94a3b8"}}>👤 Ref: {m.reference}</div>}
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+                    <span className={`badge badge-${cat}`} style={{fontSize:12,padding:"4px 12px"}}>{cat==="R"?"Regular":cat==="I"?"Irregular":"No"}</span>
+                    {catOverrides[m.name]&&<span style={{fontSize:10,color:"#a78bfa",background:"rgba(124,58,237,.15)",borderRadius:4,padding:"2px 7px"}}>✏️ Manual</span>}
+                    <select
+                      value={catOverrides[m.name]||"auto"}
+                      onChange={e=>doSetCatOverride(m.name,e.target.value)}
+                      style={{padding:"4px 8px",borderRadius:7,border:`1.5px solid ${catOverrides[m.name]?"#a78bfa":"rgba(255,255,255,.3)"}`,fontSize:11,fontWeight:600,cursor:"pointer",background:"rgba(255,255,255,.12)",color:"#fff",outline:"none",marginTop:2}}>
+                      <option value="auto" style={{color:"#1a1a1a"}}>Auto (by attendance)</option>
+                      <option value="R" style={{color:"#1a1a1a"}}>Regular</option>
+                      <option value="I" style={{color:"#1a1a1a"}}>Irregular</option>
+                      <option value="N" style={{color:"#1a1a1a"}}>No</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              {/* Stats */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:0,borderBottom:"1px solid #f0f0f0"}}>
+                {[["All-time ✅",tp,"#15803d"],[`Last ${recentS} sess`,recentP,"#1e40af"],["Overall %",pc+"%",pc>=70?"#15803d":pc>=40?"#92400e":"#b91c1c"],["Recent %",recentPct+"%",recentPct>=70?"#15803d":recentPct>=40?"#92400e":"#b91c1c"]].map(([l,v,c])=>(
+                  <div key={l} style={{padding:"14px 10px",textAlign:"center",borderRight:"1px solid #f0f0f0"}}>
+                    <div style={{fontSize:9,color:"#888",textTransform:"uppercase",letterSpacing:".05em",marginBottom:4}}>{l}</div>
+                    <div style={{fontSize:20,fontWeight:700,color:c}}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Contact actions */}
+              {m.contact&&<div style={{padding:"12px 22px",display:"flex",gap:8,borderBottom:"1px solid #f0f0f0"}}>
+                <a href={`tel:${m.contact}`} className="btn btn-green" style={{textDecoration:"none",flex:1,justifyContent:"center"}}>📞 Call</a>
+                <button className="btn btn-wa" style={{flex:1}} onClick={()=>doWAAbsent(m)}>💬 WhatsApp</button>
+              </div>}
+              {/* Journey Timeline */}
+              <div style={{padding:"0 22px 16px"}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>🗺 Category Journey</div>
+                {(()=>{
+                  const journey=getJourney(m.name);
+                  if(!journey.length) return <div style={{color:"#aaa",fontSize:12}}>No history yet.</div>;
+                  const catColor={R:"#15803d",I:"#d97706",N:"#dc2626"};
+                  const catLabel={R:"Regular",I:"Irregular",N:"No"};
+                  // Group consecutive same-cat segments
+                  const segments=[];
+                  journey.forEach((j,i)=>{
+                    if(!segments.length||segments[segments.length-1].cat!==j.cat){
+                      segments.push({cat:j.cat,from:j.date,to:j.date,count:1,present:j.present?1:0});
+                    } else {
+                      segments[segments.length-1].to=j.date;
+                      segments[segments.length-1].count++;
+                      if(j.present) segments[segments.length-1].present++;
+                    }
+                  });
+                  return(
+                    <div style={{overflowX:"auto"}}>
+                      <div style={{display:"flex",alignItems:"center",minWidth:320,gap:0}}>
+                        {segments.map((seg,i)=>(
+                          <div key={i} style={{flex:seg.count,minWidth:40,position:"relative"}}>
+                            <div style={{height:24,background:catColor[seg.cat],opacity:0.85,borderRadius:i===0?"6px 0 0 6px":i===segments.length-1?"0 6px 6px 0":"0",margin:"0 1px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                              <span style={{fontSize:9,color:"#fff",fontWeight:700}}>{catLabel[seg.cat][0]}</span>
+                            </div>
+                            <div style={{fontSize:8,color:"#888",textAlign:"center",marginTop:2,whiteSpace:"nowrap"}}>{seg.from.split(" ").slice(0,2).join(" ")}</div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",gap:12,marginTop:8}}>
+                        {Object.entries(catLabel).map(([k,v])=>(
+                          <span key={k} style={{fontSize:10,display:"flex",alignItems:"center",gap:4}}>
+                            <span style={{width:10,height:10,borderRadius:2,background:catColor[k],display:"inline-block"}}/>
+                            {v}: {segments.filter(s=>s.cat===k).reduce((a,s)=>a+s.count,0)} sessions
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Session history */}
+              <div style={{padding:"16px 22px"}}>
+                <div style={{fontWeight:600,fontSize:13,marginBottom:10}}>Session History (most recent first)</div>
+                <div style={{maxHeight:240,overflowY:"auto"}}>
+                  {sessions.length===0&&<div style={{color:"#aaa",fontSize:13}}>No sessions recorded yet.</div>}
+                  {sessions.map((s,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:"1px solid #f5f5f5"}}>
+                      <span style={{minWidth:100,fontSize:12,color:"#555"}}>{s.date}</span>
+                      <span style={{padding:"2px 8px",borderRadius:4,fontSize:11,fontWeight:600,background:s.status==="P"?"#dcfce7":s.status==="A"?"#fee2e2":"#f3f4f6",color:s.status==="P"?"#15803d":s.status==="A"?"#b91c1c":"#888"}}>
+                        {s.status==="P"?"Present":s.status==="A"?"Absent":"—"}
+                      </span>
+                      {s.note&&<span style={{fontSize:11,color:"#888",fontStyle:"italic"}}>📝 {s.note}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{padding:"12px 22px",borderTop:"1px solid #f0f0f0",textAlign:"right"}}>
+                <button className="btn btn-gray" onClick={()=>setProfileMember(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
