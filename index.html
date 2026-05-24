@@ -8,10 +8,6 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase UMD compat - loads synchronously before Babel script runs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;}
 body{margin:0;background:#f5f4f0;font-family:'Segoe UI',sans-serif;font-size:14px;}
@@ -73,36 +69,8 @@ tr:nth-child(even) td{background:#fafafa;}
 </head>
 <body>
 <div id="root"></div>
-<!-- Firebase must be fully loaded before Babel processes React -->
-<script type="text/babel" data-presets="react">
+<script type="text/babel">
 const {useState,useEffect,useRef,useMemo}=React;
-
-// ── Firebase init (runs first, synchronously, firebase compat already loaded) ──
-const _fbConfig={
-  apiKey:"AIzaSyAITKjigrJXvpJm8Lt0QEdf2DcHX00PjpM",
-  authDomain:"shreeji-attendance-c49b7.firebaseapp.com",
-  databaseURL:"https://shreeji-attendance-c49b7-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"shreeji-attendance-c49b7",
-  storageBucket:"shreeji-attendance-c49b7.firebasestorage.app",
-  messagingSenderId:"309539907524",
-  appId:"1:309539907524:web:9a53fb74b9358037746691"
-};
-const ADMIN_EMAIL="akashhumarmalekar@gmail.com";
-firebase.initializeApp(_fbConfig);
-const _fbDB=firebase.database();
-const _fbAuth=firebase.auth();
-const _fbProvider=new firebase.auth.GoogleAuthProvider();
-// Helper functions used throughout the app
-function fbSignIn(){return _fbAuth.signInWithPopup(_fbProvider);}
-function fbSignOut(){return _fbAuth.signOut();}
-function fbOnAuth(cb){return _fbAuth.onAuthStateChanged(cb);}
-function fbRef(path){return _fbDB.ref("shreeji/"+path);}
-function fbSet(path,val){return _fbDB.ref("shreeji/"+path).set(val).catch(e=>console.warn("FB write:",e));}
-function fbListen(path,cb){
-  const r=_fbDB.ref("shreeji/"+path);
-  r.on("value",cb);
-  return ()=>r.off("value",cb);
-}
 
 // ─── Master Data ────────────────────────────────────────────────────────────
 const MASTER=[
@@ -237,18 +205,7 @@ const MASTER=[
   {name:"Avinash Vinayak Kadam",followup:"Akash Humarmalekar",contact:""},
 ];
 
-// ─── Firebase DB helpers ─────────────────────────────────────────────────────
-// All data lives at /shreeji/ in Firebase Realtime Database.
-// We keep localStorage as a fast local cache so the UI is instant on load,
-// and push every write to Firebase immediately.
-const DB_PREFIX="shreeji";
-function fbRef(key){return window.__fb.ref(window.__fb.db,`${DB_PREFIX}/${key}`);}
-function fbSet(key,val){
-  if(!window.__fb) return;
-  window.__fb.set(fbRef(key),val).catch(e=>console.warn("FB write error",e));
-}
-
-// ─── Storage helpers (localStorage cache + Firebase sync) ───────────────────
+// ─── Storage helpers ─────────────────────────────────────────────────────────
 const LS_ATT="shreeji_attendance";
 const LS_HIST="shreeji_history";
 const LS_MEMBERS="shreeji_members";
@@ -262,19 +219,19 @@ function loadAtt(){
   try{const r=localStorage.getItem(LS_ATT);if(r)return JSON.parse(r);}catch(e){}
   return Object.fromEntries(MASTER.map(m=>[m.name,{status:"A",time:""}]));
 }
-function saveAtt(a){try{localStorage.setItem(LS_ATT,JSON.stringify(a));}catch(e){}fbSet("attendance",a);}
+function saveAtt(a){try{localStorage.setItem(LS_ATT,JSON.stringify(a));}catch(e){}}
 function loadHist(){try{const r=localStorage.getItem(LS_HIST);if(r)return JSON.parse(r);}catch(e){}return[];}
-function saveHist(h){try{localStorage.setItem(LS_HIST,JSON.stringify(h));}catch(e){}fbSet("history",h);}
+function saveHist(h){try{localStorage.setItem(LS_HIST,JSON.stringify(h));}catch(e){}}
 function loadMembers(){try{const r=localStorage.getItem(LS_MEMBERS);if(r)return JSON.parse(r);}catch(e){}return[];}
-function saveMembers(m){try{localStorage.setItem(LS_MEMBERS,JSON.stringify(m));}catch(e){}fbSet("members",m);}
+function saveMembers(m){try{localStorage.setItem(LS_MEMBERS,JSON.stringify(m));}catch(e){}}
 function loadFPOverrides(){try{const r=localStorage.getItem(LS_FP);if(r)return JSON.parse(r);}catch(e){}return{};}
-function saveFPOverrides(o){try{localStorage.setItem(LS_FP,JSON.stringify(o));}catch(e){}fbSet("fpOverrides",o);}
+function saveFPOverrides(o){try{localStorage.setItem(LS_FP,JSON.stringify(o));}catch(e){}}
 function loadPin(){try{return localStorage.getItem(LS_PIN)||"";}catch(e){return "";}}
-function savePin(p){try{localStorage.setItem(LS_PIN,p);}catch(e){}fbSet("pin",p);}
+function savePin(p){try{localStorage.setItem(LS_PIN,p);}catch(e){}}
 function loadNotes(){try{const r=localStorage.getItem(LS_NOTES);if(r)return JSON.parse(r);}catch(e){}return{};}
-function saveNotes(n){try{localStorage.setItem(LS_NOTES,JSON.stringify(n));}catch(e){}fbSet("sessionNotes",n);}
+function saveNotes(n){try{localStorage.setItem(LS_NOTES,JSON.stringify(n));}catch(e){}}
 function loadCatOv(){try{const r=localStorage.getItem(LS_CAT_OV);if(r)return JSON.parse(r);}catch(e){}return{};}
-function saveCatOv(o){try{localStorage.setItem(LS_CAT_OV,JSON.stringify(o));}catch(e){}fbSet("catOverrides",o);}
+function saveCatOv(o){try{localStorage.setItem(LS_CAT_OV,JSON.stringify(o));}catch(e){}}
 
 // ─── Category logic ───────────────────────────────────────────────────────────
 // Returns "R" | "I" | "N" based on last N sessions in history
@@ -296,11 +253,6 @@ const todayStr=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 function App(){
-  // ── Auth ──────────────────────────────────────────────────────────────────
-  const [authUser,setAuthUser]=useState(null);
-  const [authLoading,setAuthLoading]=useState(true);
-
-  // ── ALL STATE MUST BE DECLARED BEFORE ANY EARLY RETURN (Rules of Hooks) ──
   const [tab,setTab]=useState("panel");
   const [panelSubTab,setPanelSubTab]=useState("all");
   const [attendance,setAttendance]=useState(loadAtt);
@@ -327,98 +279,52 @@ function App(){
   const [histFrom,setHistFrom]=useState("");
   const [histTo,setHistTo]=useState("");
   const [histEditCell,setHistEditCell]=useState(null);
+  // Profile drawer
   const [profileMember,setProfileMember]=useState(null);
+  // PIN lock
   const [pin,setPin]=useState(loadPin);
   const [pinInput,setPinInput]=useState("");
   const [pinUnlocked,setPinUnlocked]=useState(()=>loadPin()==="");
   const [showPinSetup,setShowPinSetup]=useState(false);
   const [pinSetupVal,setPinSetupVal]=useState("");
   const [pinSetupConfirm,setPinSetupConfirm]=useState("");
+  // Settings tab
   const [settingsTab,setSettingsTab]=useState("general");
+  // Monthly summary
   const [monthlyFP,setMonthlyFP]=useState("All");
+  // Dark mode
   const [darkMode,setDarkMode]=useState(()=>localStorage.getItem("shreeji_dark")==="1");
+  // Year-over-year
   const [yoyRange1From,setYoyRange1From]=useState("");
   const [yoyRange1To,setYoyRange1To]=useState("");
   const [yoyRange2From,setYoyRange2From]=useState("");
   const [yoyRange2To,setYoyRange2To]=useState("");
+  // Print modal
   const [showPrintModal,setShowPrintModal]=useState(false);
+  // Followup-wise WA modal
   const [showFPWAModal,setShowFPWAModal]=useState(false);
+  // Prev-session absent panel
   const [showPrevAbsent,setShowPrevAbsent]=useState(true);
+  // Swipe nav
   const swipeRef=useRef(null);
   const swipeStartX=useRef(null);
   const TAB_ORDER=["dashboard","panel","report","history","monthly","predict","action","yoy","restructure","register","edit","settings"];
+
+  // ── Followup Restructuring state
   const [fpExpanded,setFPExpanded]=useState({});
   const [fpMoveName,setFPMoveName]=useState("");
   const [fpMoveTarget,setFPMoveTarget]=useState("");
   const [fpNewName,setFPNewName]=useState("");
+  // ── New Yuvak Registration state
   const [regForm,setRegForm]=useState({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""});
   const [regSearch,setRegSearch]=useState("");
   const [regDeleteConfirm,setRegDeleteConfirm]=useState(null);
+  // ── Edit Yuvak state
   const [editSearch,setEditSearch]=useState("");
   const [editFilter,setEditFilter]=useState("All");
   const [editTarget,setEditTarget]=useState(null);
   const [editForm,setEditForm]=useState(null);
   const [editDeleteConfirm,setEditDeleteConfirm]=useState(null);
-
-  const isAdmin=authUser&&authUser.email===ADMIN_EMAIL;
-  const viewOnly=!isAdmin||!authUser;
-
-  useEffect(()=>{
-    const unsub=fbOnAuth(u=>{
-      setAuthUser(u||false);
-      setAuthLoading(false);
-    });
-    return unsub;
-  },[]);
-
-  function doSignIn(){fbSignIn().catch(e=>alert("Sign-in failed: "+e.message));}
-  function doSignOut(){fbSignOut();}
-
-  // ── Firebase real-time sync (pull remote → local) ─────────────────────────
-  useEffect(()=>{
-    if(!authUser) return;
-    const unsubs=[];
-    function sub(key,setter,lsKey,parse){
-      const unsub=fbListen(key,snap=>{
-        if(!snap.exists()) return;
-        const val=snap.val();
-        try{localStorage.setItem(lsKey,JSON.stringify(val));}catch(e){}
-        setter(parse?parse(val):val);
-      });
-      unsubs.push(unsub);
-    }
-    sub("attendance",setAttendance,LS_ATT,null);
-    sub("history",setHistory,LS_HIST,v=>Array.isArray(v)?v:Object.values(v||{}));
-    sub("members",setExtraMembers,LS_MEMBERS,v=>Array.isArray(v)?v:Object.values(v||{}));
-    sub("fpOverrides",setFPOverrides,LS_FP,null);
-    sub("sessionNotes",setSessionNotes,LS_NOTES,null);
-    sub("catOverrides",setCatOverrides,LS_CAT_OV,null);
-    return()=>unsubs.forEach(u=>u());
-  },[authUser]);
-
-  // ── Show loading / login screens (AFTER all hooks) ────────────────────────
-  if(authLoading) return(
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16,background:"#f5f4f0"}}>
-      <div style={{fontSize:28}}>🙏</div>
-      <div style={{fontSize:14,color:"#888"}}>Loading...</div>
-    </div>
-  );
-
-  if(!authUser) return(
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"linear-gradient(135deg,#1e293b 0%,#0f172a 100%)"}}>
-      <div style={{background:"#fff",borderRadius:20,padding:"40px 36px",maxWidth:380,width:"92%",textAlign:"center",boxShadow:"0 20px 60px rgba(0,0,0,.4)"}}>
-        <div style={{fontSize:36,marginBottom:8}}>🙏</div>
-        <div style={{fontWeight:700,fontSize:20,marginBottom:4}}>|| Swami Shreeji ||</div>
-        <div style={{fontSize:13,color:"#888",marginBottom:28}}>Yuvak Attendance System</div>
-        <button onClick={doSignIn}
-          style={{display:"inline-flex",alignItems:"center",gap:10,width:"100%",justifyContent:"center",padding:"12px 20px",borderRadius:10,border:"1px solid #ddd",background:"#fff",fontSize:14,fontWeight:600,cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.1)"}}>
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style={{width:20,height:20}}/>
-          Sign in with Google
-        </button>
-        <div style={{fontSize:11,color:"#aaa",marginTop:16}}>Only authorised members can access this app.</div>
-      </div>
-    </div>
-  );
   const allMembers=useMemo(()=>{
     const base=MASTER.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:false}));
     const extra=extraMembers.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:true}));
@@ -482,7 +388,6 @@ function App(){
   },[history,sessionDate,allMembers,attendance]);
 
   function mark(name,status){
-    if(viewOnly){toast_("View-only mode — cannot mark attendance","error");return;}
     const next={...attendance,[name]:{
       status,
       time:status==="P"?new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"}):"",
@@ -676,7 +581,6 @@ function App(){
 
   // ── New Yuvak Registration helpers ────────────────────────────────────────
   function doRegister(){
-    if(viewOnly){toast_("View-only mode","error");return;}
     if(!regForm.fullName.trim()){toast_("Full name is required","error");return;}
     if(!regForm.followup.trim()){toast_("Followup group is required","error");return;}
     const dup=allMembers.find(m=>m.name.toLowerCase()===regForm.fullName.trim().toLowerCase());
@@ -717,7 +621,6 @@ function App(){
   }
 
   function doSaveEdit(){
-    if(viewOnly){toast_("View-only mode","error");return;}
     if(!editForm.fullName.trim()){toast_("Full name cannot be empty","error");return;}
     if(!editForm.followup.trim()){toast_("Followup group cannot be empty","error");return;}
     const oldName=editTarget.name;
@@ -791,7 +694,6 @@ function App(){
 
   // ── Category Override helpers ────────────────────────────────────────────
   function doSetCatOverride(name,cat){
-    if(viewOnly){toast_("View-only mode","error");return;}
     const newOv={...catOverrides};
     if(cat==="auto") delete newOv[name];
     else newOv[name]=cat;
@@ -835,7 +737,6 @@ function App(){
 
   // ── Edit a past attendance cell ───────────────────────────────────────────
   function doHistEdit(memberName,date,newStatus){
-    if(viewOnly){toast_("View-only mode","error");return;}
     const newHist=history.map(s=>{
       if(s.date!==date) return s;
       const exists=s.records.some(r=>r.name===memberName);
@@ -1298,40 +1199,18 @@ function App(){
         <div>
           <h1 style={{margin:"0 0 2px",fontSize:21,fontWeight:700}}>🙏 || Swami Shreeji || Attendance</h1>
           <div style={{fontSize:12,color:"#888"}}>Session: &nbsp;
-            <input value={sessionDate} onChange={e=>!viewOnly&&setSessionDate(e.target.value)}
-              readOnly={viewOnly}
+            <input value={sessionDate} onChange={e=>setSessionDate(e.target.value)}
               style={{border:"1px solid #ddd",borderRadius:6,padding:"2px 8px",fontSize:12,color:"#1a1a1a",width:150,marginRight:8}}/>
-            <select value={sabhaType} onChange={e=>{if(!viewOnly){setSabhaType(e.target.value);localStorage.setItem(LS_SABHA,e.target.value);}}}
-              disabled={viewOnly}
+            <select value={sabhaType} onChange={e=>{setSabhaType(e.target.value);localStorage.setItem(LS_SABHA,e.target.value);}}
               style={{border:"1px solid #ddd",borderRadius:6,padding:"2px 8px",fontSize:12,color:"#1a1a1a",background:"#fff"}}>
               {["Weekly","Monthly","Special","Yuva Shibir","Festival"].map(t=><option key={t}>{t}</option>)}
             </select>
           </div>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-          {/* User pill */}
-          <div style={{display:"flex",alignItems:"center",gap:7,background:isAdmin?"#dcfce7":"#f0f9ff",borderRadius:20,padding:"4px 12px 4px 6px",border:`1px solid ${isAdmin?"#bbf7d0":"#bae6fd"}`}}>
-            {authUser.photoURL&&<img src={authUser.photoURL} style={{width:24,height:24,borderRadius:"50%"}}/>}
-            <div>
-              <div style={{fontSize:11,fontWeight:700,color:isAdmin?"#15803d":"#0369a1",lineHeight:1.2}}>{isAdmin?"👑 Admin":"👁 Viewer"}</div>
-              <div style={{fontSize:10,color:"#888",lineHeight:1.2}}>{authUser.email}</div>
-            </div>
-          </div>
-          <button onClick={doSignOut} className="btn btn-gray" style={{fontSize:11,padding:"5px 10px"}}>Sign out</button>
-          {pin&&!viewOnly&&<button onClick={()=>{setPinUnlocked(false);setPinInput("");}} className="btn btn-gray" style={{fontSize:12}}>🔒 Lock</button>}
-          <button onClick={()=>setDarkMode(d=>!d)} className="btn btn-gray" style={{fontSize:13}} title="Toggle dark mode">{darkMode?"☀️":"🌙"}</button>
-          {!viewOnly&&<button onClick={()=>setShowPrintModal(true)} className="btn btn-blue" style={{fontSize:12}}>🖨 Print Report</button>}
-        </div>
+        {pin&&<button onClick={()=>{setPinUnlocked(false);setPinInput("");}} className="btn btn-gray" style={{fontSize:12}}>🔒 Lock</button>}
+        <button onClick={()=>setDarkMode(d=>!d)} className="btn btn-gray" style={{fontSize:13}} title="Toggle dark mode">{darkMode?"☀️":"🌙"}</button>
+        <button onClick={()=>setShowPrintModal(true)} className="btn btn-blue" style={{fontSize:12}}>🖨 Print Report</button>
       </div>
-
-      {/* View-only banner */}
-      {viewOnly&&<div style={{background:"#fffbeb",border:"1px solid #fde68a",borderRadius:10,padding:"10px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
-        <span style={{fontSize:16}}>👁</span>
-        <div>
-          <span style={{fontWeight:600,fontSize:13,color:"#92400e"}}>View-only mode</span>
-          <span style={{fontSize:12,color:"#b45309",marginLeft:8}}>You can see all data but cannot make changes. Contact the admin to get write access.</span>
-        </div>
-      </div>}
 
       {/* Tabs */}
       <div style={{display:"flex",borderBottom:"1px solid #ddd",marginBottom:18,gap:0,overflowX:"auto"}}>
@@ -1691,15 +1570,15 @@ function App(){
 
         {/* Toolbar row 2 – actions */}
         <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:14}}>
-          {!viewOnly&&<button className="btn btn-green" onClick={()=>{filtered.forEach(m=>mark(m.name,"P"));toast_(`${filtered.length} marked present`);}}>✓ All P</button>}
-          {!viewOnly&&<button className="btn btn-red" onClick={()=>{filtered.forEach(m=>mark(m.name,"A"));toast_(`${filtered.length} marked absent`,"error");}}>✗ All A</button>}
+          <button className="btn btn-green" onClick={()=>{filtered.forEach(m=>mark(m.name,"P"));toast_(`${filtered.length} marked present`);}}>✓ All P</button>
+          <button className="btn btn-red" onClick={()=>{filtered.forEach(m=>mark(m.name,"A"));toast_(`${filtered.length} marked absent`,"error");}}>✗ All A</button>
           <span style={{flex:1}}/>
-          {!viewOnly&&<button className="btn btn-purple" onClick={()=>setShowSubmit(true)}>✔ Submit Attendance</button>}
+          <button className="btn btn-purple" onClick={()=>setShowSubmit(true)}>✔ Submit Attendance</button>
           <button className="btn btn-green" onClick={genExcel}>⬇ Excel</button>
           <button className="btn btn-wa" onClick={doWA}>💬 WhatsApp</button>
           <button className="btn btn-wa" style={{background:"#128C7E"}} onClick={()=>setShowFPWAModal(true)}>💬 FP-Wise WA</button>
           <button className="btn btn-blue" onClick={doPDF}>🖨 PDF</button>
-          {!viewOnly&&<button className="btn btn-red" onClick={()=>setShowReset(true)}>↺ Reset</button>}
+          <button className="btn btn-red" onClick={()=>setShowReset(true)}>↺ Reset</button>
         </div>
 
         {/* Member list */}
@@ -3049,15 +2928,6 @@ function App(){
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-</script>
-<script>
-// Fallback: if root is still empty after 4 seconds, show a diagnostic message
-setTimeout(()=>{
-  const root=document.getElementById("root");
-  if(root&&root.children.length===0){
-    root.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;font-family:sans-serif;background:#0f172a;color:#fff"><div style="font-size:32px">🙏</div><div style="font-size:16px;font-weight:600">|| Swami Shreeji ||</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Loading failed. Please hard-refresh (Ctrl+Shift+R)</div><button onclick="location.reload(true)" style="margin-top:12px;padding:10px 24px;border-radius:8px;border:none;background:#15803d;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Reload</button></div>';
-  }
-},4000);
 </script>
 </body>
 </html>
