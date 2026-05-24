@@ -105,7 +105,8 @@ tr:nth-child(even) td{background:#fafafa;}
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel">
+<!-- Firebase must be fully loaded before Babel processes React -->
+<script type="text/babel" data-presets="react">
 const {useState,useEffect,useRef,useMemo}=React;
 
 // ─── Master Data ────────────────────────────────────────────────────────────
@@ -3071,7 +3072,23 @@ function App(){
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+function mountApp(){
+  if(window.__fb){
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  } else {
+    setTimeout(mountApp, 100);
+  }
+}
+window.addEventListener("load", mountApp);
+</script>
+<script>
+// Fallback: if root is still empty after 4 seconds, show a diagnostic message
+setTimeout(()=>{
+  const root=document.getElementById("root");
+  if(root&&root.children.length===0){
+    root.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;font-family:sans-serif;background:#0f172a;color:#fff"><div style="font-size:32px">🙏</div><div style="font-size:16px;font-weight:600">|| Swami Shreeji ||</div><div style="font-size:12px;color:#94a3b8;margin-top:4px">Loading failed. Please hard-refresh (Ctrl+Shift+R)</div><button onclick="location.reload(true)" style="margin-top:12px;padding:10px 24px;border-radius:8px;border:none;background:#15803d;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Reload</button></div>';
+  }
+},4000);
 </script>
 </body>
 </html>
