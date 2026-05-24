@@ -8,42 +8,10 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase UMD (synchronous, no ES module timing issues) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script>
-  const firebaseConfig={
-    apiKey: "AIzaSyAITKjigrJXvpJm8Lt0QEdf2DcHX00PjpM",
-    authDomain: "shreeji-attendance-c49b7.firebaseapp.com",
-    databaseURL: "https://shreeji-attendance-c49b7-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "shreeji-attendance-c49b7",
-    storageBucket: "shreeji-attendance-c49b7.firebasestorage.app",
-    messagingSenderId: "309539907524",
-    appId: "1:309539907524:web:9a53fb74b9358037746691"
-  };
-
-  const ADMIN_EMAIL="akashhumarmalekar@gmail.com";
-  firebase.initializeApp(firebaseConfig);
-  const _db=firebase.database();
-  const _auth=firebase.auth();
-  const _provider=new firebase.auth.GoogleAuthProvider();
-
-  // Compat API wrappers to match the modular API shape used in the app
-  window.__fb={
-    ADMIN_EMAIL,
-    db: _db,
-    auth: _auth,
-    provider: _provider,
-    ref: (db,path)=>db.ref(path),
-    set: (ref,val)=>ref.set(val),
-    onValue: (ref,cb)=>{ref.on("value",snap=>cb(snap));return ()=>ref.off("value");},
-    get: (ref)=>ref.once("value"),
-    signInWithPopup: (auth,provider)=>auth.signInWithPopup(provider),
-    signOut: (auth)=>auth.signOut(),
-    onAuthStateChanged: (auth,cb)=>auth.onAuthStateChanged(cb),
-  };
-</script>
+<!-- Firebase UMD compat - loads synchronously before Babel script runs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;}
 body{margin:0;background:#f5f4f0;font-family:'Segoe UI',sans-serif;font-size:14px;}
@@ -108,6 +76,33 @@ tr:nth-child(even) td{background:#fafafa;}
 <!-- Firebase must be fully loaded before Babel processes React -->
 <script type="text/babel" data-presets="react">
 const {useState,useEffect,useRef,useMemo}=React;
+
+// ── Firebase init (runs first, synchronously, firebase compat already loaded) ──
+const _fbConfig={
+  apiKey:"AIzaSyAITKjigrJXvpJm8Lt0QEdf2DcHX00PjpM",
+  authDomain:"shreeji-attendance-c49b7.firebaseapp.com",
+  databaseURL:"https://shreeji-attendance-c49b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"shreeji-attendance-c49b7",
+  storageBucket:"shreeji-attendance-c49b7.firebasestorage.app",
+  messagingSenderId:"309539907524",
+  appId:"1:309539907524:web:9a53fb74b9358037746691"
+};
+const ADMIN_EMAIL="akashhumarmalekar@gmail.com";
+firebase.initializeApp(_fbConfig);
+const _fbDB=firebase.database();
+const _fbAuth=firebase.auth();
+const _fbProvider=new firebase.auth.GoogleAuthProvider();
+// Helper functions used throughout the app
+function fbSignIn(){return _fbAuth.signInWithPopup(_fbProvider);}
+function fbSignOut(){return _fbAuth.signOut();}
+function fbOnAuth(cb){return _fbAuth.onAuthStateChanged(cb);}
+function fbRef(path){return _fbDB.ref("shreeji/"+path);}
+function fbSet(path,val){return _fbDB.ref("shreeji/"+path).set(val).catch(e=>console.warn("FB write:",e));}
+function fbListen(path,cb){
+  const r=_fbDB.ref("shreeji/"+path);
+  r.on("value",cb);
+  return ()=>r.off("value",cb);
+}
 
 // ─── Master Data ────────────────────────────────────────────────────────────
 const MASTER=[
@@ -365,32 +360,26 @@ function App(){
   const [editForm,setEditForm]=useState(null);
   const [editDeleteConfirm,setEditDeleteConfirm]=useState(null);
 
-  const isAdmin=authUser&&authUser.email===window.__fb?.ADMIN_EMAIL;
+  const isAdmin=authUser&&authUser.email===ADMIN_EMAIL;
   const viewOnly=!isAdmin||!authUser;
 
   useEffect(()=>{
-    if(!window.__fb) return;
-    const unsub=window.__fb.onAuthStateChanged(window.__fb.auth,u=>{
+    const unsub=fbOnAuth(u=>{
       setAuthUser(u||false);
       setAuthLoading(false);
     });
     return unsub;
   },[]);
 
-  function doSignIn(){
-    window.__fb.signInWithPopup(window.__fb.auth,window.__fb.provider)
-      .catch(e=>alert("Sign-in failed: "+e.message));
-  }
-  function doSignOut(){window.__fb.signOut(window.__fb.auth);}
+  function doSignIn(){fbSignIn().catch(e=>alert("Sign-in failed: "+e.message));}
+  function doSignOut(){fbSignOut();}
 
   // ── Firebase real-time sync (pull remote → local) ─────────────────────────
   useEffect(()=>{
-    if(!window.__fb||!authUser) return;
-    const {db,ref:fbRefFn,onValue:onVal}=window.__fb;
+    if(!authUser) return;
     const unsubs=[];
     function sub(key,setter,lsKey,parse){
-      const r=fbRefFn(db,`shreeji/${key}`);
-      const unsub=onVal(r,snap=>{
+      const unsub=fbListen(key,snap=>{
         if(!snap.exists()) return;
         const val=snap.val();
         try{localStorage.setItem(lsKey,JSON.stringify(val));}catch(e){}
@@ -3059,14 +3048,7 @@ function App(){
   );
 }
 
-function mountApp(){
-  if(window.__fb){
-    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
-  } else {
-    setTimeout(mountApp, 100);
-  }
-}
-mountApp();
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 <script>
 // Fallback: if root is still empty after 4 seconds, show a diagnostic message
