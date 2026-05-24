@@ -8,14 +8,11 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase -->
-<script type="module">
-  import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import{getDatabase,ref,set,onValue,get}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-  import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-  // ── YOUR FIREBASE CONFIG ─────────────────────────────────────────────────
-  // REPLACE these values with your actual Firebase project config
+<!-- Firebase UMD (synchronous, no ES module timing issues) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
   const firebaseConfig={
     apiKey: "AIzaSyAITKjigrJXvpJm8Lt0QEdf2DcHX00PjpM",
     authDomain: "shreeji-attendance-c49b7.firebaseapp.com",
@@ -27,14 +24,25 @@
   };
 
   const ADMIN_EMAIL="akashhumarmalekar@gmail.com";
+  firebase.initializeApp(firebaseConfig);
+  const _db=firebase.database();
+  const _auth=firebase.auth();
+  const _provider=new firebase.auth.GoogleAuthProvider();
 
-  const app=initializeApp(firebaseConfig);
-  const db=getDatabase(app);
-  const auth=getAuth(app);
-  const provider=new GoogleAuthProvider();
-
-  // Expose to global so Babel/React can use them
-  window.__fb={db,auth,provider,ref,set,onValue,get,signInWithPopup,signOut,onAuthStateChanged,ADMIN_EMAIL};
+  // Compat API wrappers to match the modular API shape used in the app
+  window.__fb={
+    ADMIN_EMAIL,
+    db: _db,
+    auth: _auth,
+    provider: _provider,
+    ref: (db,path)=>db.ref(path),
+    set: (ref,val)=>ref.set(val),
+    onValue: (ref,cb)=>{ref.on("value",snap=>cb(snap));return ()=>ref.off("value");},
+    get: (ref)=>ref.once("value"),
+    signInWithPopup: (auth,provider)=>auth.signInWithPopup(provider),
+    signOut: (auth)=>auth.signOut(),
+    onAuthStateChanged: (auth,cb)=>auth.onAuthStateChanged(cb),
+  };
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;}
