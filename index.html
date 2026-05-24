@@ -302,9 +302,71 @@ const todayStr=new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short
 // ─── Main App ─────────────────────────────────────────────────────────────────
 function App(){
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const [authUser,setAuthUser]=useState(null);   // null=loading, false=signed out
+  const [authUser,setAuthUser]=useState(null);
   const [authLoading,setAuthLoading]=useState(true);
+
+  // ── ALL STATE MUST BE DECLARED BEFORE ANY EARLY RETURN (Rules of Hooks) ──
+  const [tab,setTab]=useState("panel");
+  const [panelSubTab,setPanelSubTab]=useState("all");
+  const [attendance,setAttendance]=useState(loadAtt);
+  const [history,setHistory]=useState(loadHist);
+  const [extraMembers,setExtraMembers]=useState(loadMembers);
+  const [fpOverrides,setFPOverrides]=useState(loadFPOverrides);
+  const [sessionDate,setSessionDate]=useState(todayStr);
+  const [sabhaType,setSabhaType]=useState(()=>localStorage.getItem(LS_SABHA)||"Weekly");
+  const [sessionNotes,setSessionNotes]=useState(loadNotes);
+  const [sessionNote,setSessionNote]=useState("");
+  const [catOverrides,setCatOverrides]=useState(loadCatOv);
+  const [search,setSearch]=useState("");
+  const [filterFP,setFilterFP]=useState("All");
+  const [qSearch,setQSearch]=useState("");
+  const [qResults,setQResults]=useState([]);
+  const [qHighlight,setQHighlight]=useState(0);
+  const qRef=useRef(null);
+  const [toast,setToast]=useState(null);
+  const [showReset,setShowReset]=useState(false);
+  const [showSubmit,setShowSubmit]=useState(false);
+  const [histSearch,setHistSearch]=useState("");
+  const [histSort,setHistSort]=useState("name");
+  const [histSortDir,setHistSortDir]=useState(1);
+  const [histFrom,setHistFrom]=useState("");
+  const [histTo,setHistTo]=useState("");
+  const [histEditCell,setHistEditCell]=useState(null);
+  const [profileMember,setProfileMember]=useState(null);
+  const [pin,setPin]=useState(loadPin);
+  const [pinInput,setPinInput]=useState("");
+  const [pinUnlocked,setPinUnlocked]=useState(()=>loadPin()==="");
+  const [showPinSetup,setShowPinSetup]=useState(false);
+  const [pinSetupVal,setPinSetupVal]=useState("");
+  const [pinSetupConfirm,setPinSetupConfirm]=useState("");
+  const [settingsTab,setSettingsTab]=useState("general");
+  const [monthlyFP,setMonthlyFP]=useState("All");
+  const [darkMode,setDarkMode]=useState(()=>localStorage.getItem("shreeji_dark")==="1");
+  const [yoyRange1From,setYoyRange1From]=useState("");
+  const [yoyRange1To,setYoyRange1To]=useState("");
+  const [yoyRange2From,setYoyRange2From]=useState("");
+  const [yoyRange2To,setYoyRange2To]=useState("");
+  const [showPrintModal,setShowPrintModal]=useState(false);
+  const [showFPWAModal,setShowFPWAModal]=useState(false);
+  const [showPrevAbsent,setShowPrevAbsent]=useState(true);
+  const swipeRef=useRef(null);
+  const swipeStartX=useRef(null);
+  const TAB_ORDER=["dashboard","panel","report","history","monthly","predict","action","yoy","restructure","register","edit","settings"];
+  const [fpExpanded,setFPExpanded]=useState({});
+  const [fpMoveName,setFPMoveName]=useState("");
+  const [fpMoveTarget,setFPMoveTarget]=useState("");
+  const [fpNewName,setFPNewName]=useState("");
+  const [regForm,setRegForm]=useState({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""});
+  const [regSearch,setRegSearch]=useState("");
+  const [regDeleteConfirm,setRegDeleteConfirm]=useState(null);
+  const [editSearch,setEditSearch]=useState("");
+  const [editFilter,setEditFilter]=useState("All");
+  const [editTarget,setEditTarget]=useState(null);
+  const [editForm,setEditForm]=useState(null);
+  const [editDeleteConfirm,setEditDeleteConfirm]=useState(null);
+
   const isAdmin=authUser&&authUser.email===window.__fb?.ADMIN_EMAIL;
+  const viewOnly=!isAdmin||!authUser;
 
   useEffect(()=>{
     if(!window.__fb) return;
@@ -345,7 +407,7 @@ function App(){
     return()=>unsubs.forEach(u=>u());
   },[authUser]);
 
-  // ── Show login screen if not signed in ────────────────────────────────────
+  // ── Show loading / login screens (AFTER all hooks) ────────────────────────
   if(authLoading) return(
     <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",flexDirection:"column",gap:16,background:"#f5f4f0"}}>
       <div style={{fontSize:28}}>🙏</div>
@@ -368,81 +430,6 @@ function App(){
       </div>
     </div>
   );
-
-  // If signed in but not admin → read-only viewer
-  const viewOnly=!isAdmin;
-  const [tab,setTab]=useState("panel");
-  const [panelSubTab,setPanelSubTab]=useState("all");
-  const [attendance,setAttendance]=useState(loadAtt);
-  const [history,setHistory]=useState(loadHist);
-  const [extraMembers,setExtraMembers]=useState(loadMembers);
-  const [fpOverrides,setFPOverrides]=useState(loadFPOverrides);
-  const [sessionDate,setSessionDate]=useState(todayStr);
-  const [sabhaType,setSabhaType]=useState(()=>localStorage.getItem(LS_SABHA)||"Weekly");
-  const [sessionNotes,setSessionNotes]=useState(loadNotes);
-  const [sessionNote,setSessionNote]=useState("");
-  const [catOverrides,setCatOverrides]=useState(loadCatOv);
-  const [search,setSearch]=useState("");
-  const [filterFP,setFilterFP]=useState("All");
-  const [qSearch,setQSearch]=useState("");
-  const [qResults,setQResults]=useState([]);
-  const [qHighlight,setQHighlight]=useState(0);
-  const qRef=useRef(null);
-  const [toast,setToast]=useState(null);
-  const [showReset,setShowReset]=useState(false);
-  const [showSubmit,setShowSubmit]=useState(false);
-  const [histSearch,setHistSearch]=useState("");
-  const [histSort,setHistSort]=useState("name");
-  const [histSortDir,setHistSortDir]=useState(1);
-  const [histFrom,setHistFrom]=useState("");
-  const [histTo,setHistTo]=useState("");
-  const [histEditCell,setHistEditCell]=useState(null);
-  // Profile drawer
-  const [profileMember,setProfileMember]=useState(null);
-  // PIN lock
-  const [pin,setPin]=useState(loadPin);
-  const [pinInput,setPinInput]=useState("");
-  const [pinUnlocked,setPinUnlocked]=useState(()=>loadPin()==="");
-  const [showPinSetup,setShowPinSetup]=useState(false);
-  const [pinSetupVal,setPinSetupVal]=useState("");
-  const [pinSetupConfirm,setPinSetupConfirm]=useState("");
-  // Settings tab
-  const [settingsTab,setSettingsTab]=useState("general");
-  // Monthly summary
-  const [monthlyFP,setMonthlyFP]=useState("All");
-  // Dark mode
-  const [darkMode,setDarkMode]=useState(()=>localStorage.getItem("shreeji_dark")==="1");
-  // Year-over-year
-  const [yoyRange1From,setYoyRange1From]=useState("");
-  const [yoyRange1To,setYoyRange1To]=useState("");
-  const [yoyRange2From,setYoyRange2From]=useState("");
-  const [yoyRange2To,setYoyRange2To]=useState("");
-  // Print modal
-  const [showPrintModal,setShowPrintModal]=useState(false);
-  // Followup-wise WA modal
-  const [showFPWAModal,setShowFPWAModal]=useState(false);
-  // Prev-session absent panel
-  const [showPrevAbsent,setShowPrevAbsent]=useState(true);
-  // Swipe nav
-  const swipeRef=useRef(null);
-  const swipeStartX=useRef(null);
-  const TAB_ORDER=["dashboard","panel","report","history","monthly","predict","action","yoy","restructure","register","edit","settings"];
-
-  // ── Followup Restructuring state
-  const [fpExpanded,setFPExpanded]=useState({});
-  const [fpMoveName,setFPMoveName]=useState("");
-  const [fpMoveTarget,setFPMoveTarget]=useState("");
-  const [fpNewName,setFPNewName]=useState("");
-  // ── New Yuvak Registration state
-  const [regForm,setRegForm]=useState({fullName:"",dob:"",contact:"",reference:"",address:"",followup:""});
-  const [regSearch,setRegSearch]=useState("");
-  const [regDeleteConfirm,setRegDeleteConfirm]=useState(null);
-  // ── Edit Yuvak state
-  const [editSearch,setEditSearch]=useState("");
-  const [editFilter,setEditFilter]=useState("All");
-  const [editTarget,setEditTarget]=useState(null);
-  const [editForm,setEditForm]=useState(null);
-  const [editDeleteConfirm,setEditDeleteConfirm]=useState(null);
   const allMembers=useMemo(()=>{
     const base=MASTER.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:false}));
     const extra=extraMembers.map(m=>({...m,followup:fpOverrides[m.name]||m.followup,isExtra:true}));
@@ -3079,7 +3066,7 @@ function mountApp(){
     setTimeout(mountApp, 100);
   }
 }
-window.addEventListener("load", mountApp);
+mountApp();
 </script>
 <script>
 // Fallback: if root is still empty after 4 seconds, show a diagnostic message
